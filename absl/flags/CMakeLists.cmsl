@@ -1,0 +1,117 @@
+import AbseilHelpers;
+import AbseilConfigureCopts;
+
+int main() {
+  auto flags_internal = absl::cc_library(
+      "flags_internal",
+      {.hdrs = {"internal/path_util.h", "internal/program_name.h"},
+       .srcs = {"internal/program_name.cc"},
+       .copts = absl::default_copts,
+       .linkopts = absl::default_linkopts,
+       .deps = {strings, synchronization},
+       .public = true});
+
+  auto flags_config = absl::cc_library(
+      "flags_config",
+      {.hdrs = {"config.h", "usage_config.h"},
+       .srcs = {"usage_config.cc"},
+       .copts = absl::default_copts,
+       .linkopts = absl::default_linkopts,
+       .deps = {flags_internal, core_headers, strings, synchronization}});
+
+  auto flags_marshalling = absl::cc_library(
+      "flags_marshalling", {.hdrs = {"marshalling.h"},
+                            .srcs = {"marshalling.cc"},
+                            .copts = absl::default_copts,
+                            .linkopts = absl::default_linkopts,
+                            .deps = {core_headers, strings, str_format}});
+
+  auto flags_handle = absl::cc_library(
+      "flags_handle",
+      {.hdrs = {"internal/commandlineflag.h"},
+       .srcs = {"internal/commandlineflag.cc"},
+       .copts = absl::default_copts,
+       .linkopts = absl::default_linkopts,
+       .deps = {flags_config, flags_marshalling, base, core_headers, strings,
+                synchronization, optional}});
+
+  auto flags_registry = absl::cc_library(
+      "flags_registry",
+      {.hdrs = {"internal/registry.h", "internal/type_erased.h"},
+       .srcs = {"internal/registry.cc", "internal/type_erased.cc"},
+       .copts = absl::default_copts,
+       .linkopts = absl::default_linkopts,
+       .deps = {flags_config, flags_handle, base, core_headers,
+                dynamic_annotations, strings, synchronization}});
+
+  auto flags = absl::cc_library(
+      "flags", {.hdrs = {"declare.h", "flag.h", "internal/flag.h"},
+                .srcs = {"flag.cc"},
+                .copts = absl::default_copts,
+                .linkopts = absl::default_linkopts,
+                .deps = {flags_config, flags_handle, flags_marshalling,
+                         flags_registry, base, core_headers, strings}});
+
+  auto flags_usage = absl::cc_library(
+      "flags_usage", {.hdrs = {"internal/usage.h"},
+                      .srcs = {"internal/usage.cc"},
+                      .copts = absl::default_copts,
+                      .linkopts = absl::default_linkopts,
+                      .deps = {flags_config, flags, flags_handle,
+                               flags_internal, strings, synchronization}});
+
+  auto flags_parse = absl::cc_library(
+      "flags_parse",
+      {.hdrs = {"internal/parse.h", "parse.h"},
+       .srcs = {"parse.cc"},
+       .copts = absl::default_copts,
+       .linkopts = absl::default_linkopts,
+       .deps = {flags_config, flags, flags_handle, flags_internal,
+                flags_registry, flags_usage, strings, synchronization}});
+
+  ///////////////////////////////////////////////////////////////////////
+  // Unit tests in alpahabetical order.
+
+  absl::cc_test("flags_commandlineflag_test",
+                {.srcs = {"internal/commandlineflag_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {flags, flags_handle, flags_registry, memory, strings,
+                          gmock_main}});
+
+  absl::cc_test("flags_flag_test",
+                {.srcs = {"flag_test.cc", "flag_test_defs.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {flags, strings, gmock_main}});
+
+  absl::cc_test("flags_parse_test",
+                {.srcs = {"parse_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {flags, base, flags_parse, scoped_set_env, span,
+                          strings, gmock_main}});
+
+  absl::cc_test("flags_path_util_test", {.srcs = {"internal/path_util_test.cc"},
+                                         .copts = absl::test_copts,
+                                         .deps = {flags_internal, gmock_main}});
+
+  absl::cc_test("flags_program_name_test",
+                {.srcs = {"internal/program_name_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {flags_internal, strings, gmock_main}});
+
+  absl::cc_test(
+      "flags_type_erased_test",
+      {.srcs = {"internal/type_erased_test.cc"},
+       .copts = absl::test_copts,
+       .deps = {flags, flags_registry, mermory, strings, gmock_main}});
+
+  absl::cc_test("flags_usage_config_test",
+                {.srcs = {"usage_config_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {flags_config, flags_internal, strings, gmock_main}});
+
+  absl::cc_test("flags_usage_test",
+                {.srcs = {"internal/usage_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {flags_config, flags, flags_internal, flags_parse,
+                          flags_usage, memory, strings, gmock_main}});
+}

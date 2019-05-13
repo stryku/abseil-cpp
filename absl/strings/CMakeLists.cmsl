@@ -1,0 +1,192 @@
+import AbseilHelpers;
+import AbseilConfigureCopts;
+
+int main() {
+  auto strings = absl::cc_library(
+      "strings",
+      {.hdrs = {"ascii.h", "charconv.h", "escaping.h", "match.h", "numbers.h",
+                "str_cat.h", "str_join.h", "str_replace.h", "str_split.h",
+                "string_view.h", "strip.h", "substitute.h"},
+       .srcs = {"ascii.cc", "charconv.cc", "escaping.cc",
+                "internal/charconv_bigint.cc", "internal/charconv_bigint.h",
+                "internal/charconv_parse.cc", "internal/charconv_parse.h",
+                "internal/memutil.cc", "internal/memutil.h",
+                "internal/stl_type_traits.h", "internal/str_join_internal.h",
+                "internal/str_split_internal.h", "match.cc", "numbers.cc",
+                "str_cat.cc", "str_replace.cc", "str_split.cc",
+                "string_view.cc", "substitute.cc"},
+       .copts = absl::default_copts,
+       .deps = {strings_internal, base, bits, config, core_headers, endian,
+                throw_delegate, memory, type_traits, int128},
+       .public = true});
+
+  auto strings_internal = absl::cc_library(
+      "strings_internal",
+      {.hdrs = {"internal/char_map.h", "internal/ostringstream.h",
+                "internal/resize_uninitialized.h", "internal/utf8.h"},
+       .srcs = {"internal/ostringstream.cc"
+                "internal/utf8.cc"},
+       .copts = absl::default_copts,
+       .deps = {core_headers, endian, type_traits},
+       .public = true});
+
+  absl::cc_test("match_test", {.srcs = {"match_test.cc"},
+                               .copts = absl::test_copts,
+                               .deps = {strings, base, , gmock_main}});
+
+  absl::cc_test("escaping_test",
+                {.srcs = {"escaping_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {strings, core_headers, fixed_array, , gmock_main}});
+
+  absl::cc_test("ascii_test",
+                {.srcs = {"ascii_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {strings, core_headers, fixed_array, , gmock_main}});
+
+  absl::cc_test("utf8_test",
+                {.srcs = {"internal/utf8_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {strings_internal, base, core_headers, , gmock_main}});
+
+  absl::cc_test("string_view_test",
+                {.srcs = {"string_view_test.cc"},
+                 .copts = absl::test_copts + absl::exceptions_flag,
+                 .linkopts = absl::exceptions_flag_linkopts,
+                 .deps = {strings, config, core_headers, dynamic_annotations, ,
+                          gmock_main}});
+
+  absl::cc_test("substitute_test",
+                {.srcs = {"substitute_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {strings, core_headers, , gmock_main}});
+
+  absl::cc_test("str_replace_test", {.srcs = {"str_replace_test.cc"},
+                                     .copts = absl::test_copts,
+                                     .deps = {strings, , gmock_main}});
+
+  absl::cc_test("str_split_test", {.srcs = {"str_split_test.cc"},
+                                   .copts = absl::test_copts,
+                                   .deps = {strings, base, code_headers,
+                                            dynamic_annotations, gmock_main}});
+
+  absl::cc_test("resize_uninitialized_test",
+                {.srcs = {"internal/resize_uninitialized.h",
+                          "internal/resize_uninitialized_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {base, code_headers, type_traits, gmock_main}});
+
+  absl::cc_test("str_join_test",
+                {.srcs = {"str_join_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {strings, base, code_headers, memory, gmock_main}});
+
+  absl::cc_test("str_cat_test", {.srcs = {"str_cat_test.cc"},
+                                 .copts = absl::test_copts,
+                                 .deps = {strings, code_headers, gmock_main}});
+
+  absl::cc_test("numbers_test", {.srcs = {"internal/numbers_test_common.h"
+                                          "numbers_test.cc"},
+                                 .copts = absl::test_copts,
+                                 .deps = {strings, base, core_headers,
+                                          pow10_helper, gmock_main}});
+
+  absl::cc_test("strip_test", {.srcs = {"strip_test.cc"},
+                               .copts = absl::test_copts,
+                               .deps = {strings, base, gmock_main}});
+
+  absl::cc_test("char_map_test", {.srcs = {"internal/char_map_test.cc"},
+                                  .copts = absl::test_copts,
+                                  .deps = {strings_internal, gmock_main}});
+
+  absl::cc_test("charconv_test", {.srcs = {"charconv_test.cc"},
+                                  .copts = absl::test_copts,
+                                  .deps = {strings, str_format, base,
+                                           pow10_helper, gmock_main}});
+
+  absl::cc_test("charconv_parse_test",
+                {.srcs = {"internal/charconv_parse.h"
+                          "internal/charconv_parse_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {strings, base, gmock_main}});
+
+  absl::cc_test("charconv_bigint_test",
+                {.srcs = {"internal/charconv_bigint.h"
+                          "internal/charconv_bigint_test.cc"
+                          "internal/charconv_parse.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {strings, base, gmock_main}});
+
+  auto str_format =
+      absl::cc_library("str_format", {.hdrs = {"str_format.h"},
+                                      .copts = absl::default_copts,
+                                      .deps = {str_format_internal},
+                                      .public = true});
+
+  auto str_format_internal = absl::cc_library(
+      "str_format_internal",
+      {.hdrs = {"internal/str_format/arg.h", "internal/str_format/bind.h",
+                "internal/str_format/checker.h",
+                "internal/str_format/extension.h",
+                "internal/str_format/float_conversion.h",
+                "internal/str_format/output.h", "internal/str_format/parser.h"},
+       .srcs = {"internal/str_format/arg.cc", "internal/str_format/bind.cc",
+                "internal/str_format/extension.cc",
+                "internal/str_format/float_conversion.cc",
+                "internal/str_format/output.cc",
+                "internal/str_format/parser.cc"},
+       .copts = absl::default_copts,
+       .deps = {strings, core_headers, inlined_vector, type_traits, int128,
+                span}});
+
+  absl::cc_test("str_format_test",
+                {.srcs = {"str_format_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {str_format, strings, core_headers, gmock_main}});
+
+  absl::cc_test("str_format_extension_test",
+                {.srcs = {"internal/str_format/extension_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {str_format, str_format_internal, gmock_main}});
+
+  absl::cc_test("str_format_arg_test",
+                {.srcs = {"internal/str_format/arg_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {str_format, str_format_internal, gmock_main}});
+
+  absl::cc_test("str_format_bind_test",
+                {.srcs = {"internal/str_format/bind_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {str_format_internal, gmock_main}});
+
+  absl::cc_test("str_format_checker_test",
+                {.srcs = {"internal/str_format/checker_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {str_format, gmock_main}});
+
+  absl::cc_test("str_format_convert_test",
+                {.srcs = {"internal/str_format/convert_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {str_format_internal, int128, gmock_main}});
+
+  absl::cc_test("str_format_output_test",
+                {.srcs = {"internal/str_format/output_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {str_format_internal, gmock_main}});
+
+  absl::cc_test("str_format_parser_test",
+                {.srcs = {"internal/str_format/parser_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {str_format_internal, core_headers, gmock_main}});
+
+  auto str_format_internal =
+      absl::cc_library("pow10_helper", {.hdrs = {"internal/pow10_helper.h"},
+                                        .srcs = {"internal/pow10_helper.cc"},
+                                        .copts = absl::default_copts,
+                                        .testonly = true});
+
+  absl::cc_test("pow10_helper_test",
+                {.srcs = {"internal/pow10_helper_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {pow10_helper, str_format, gmock_main}});
+}

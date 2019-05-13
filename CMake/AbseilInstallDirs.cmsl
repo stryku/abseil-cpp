@@ -1,0 +1,21 @@
+namespace absl {
+auto current_project = cmake::current_project();
+auto subdir =
+    current_project.name() + '_' + current_project.version().to_string;
+export {
+  auto install_bindir = isset(absl_VERSION) ? cmake::install_bindir() / subdir
+                                            : cmake::install_bindir();
+
+  auto install_configdir =
+      isset(absl_VERSION)
+          ? cmake::install_libdir() / "cmake" / subdir
+          : cmake::install_libdir() / "cmake" / current_project.name();
+
+  auto install_includedir = isset(absl_VERSION)
+                                ? cmake::install_includedir() / subdir
+                                : cmake::install_includedir();
+
+  auto install_libdir = isset(absl_VERSION) ? cmake::install_libdir() / subdir
+                                            : cmake::install_libdir();
+}
+}  // namespace absl

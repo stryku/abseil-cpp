@@ -1,0 +1,130 @@
+namespace absl {
+string ide_folder = "Abseil";
+
+export class cc_library_params {
+  list<string> hdrs;
+  list<string> srcs;
+  list<library> deps;
+  list<string> copts;
+  list<string> defines;
+  list<string> linkopts;
+  bool public;
+  bool testonly;
+};
+
+auto add_library(project absl_project, string name, cc_library_params params) {
+  auto lib = absl_project.add_static_library(name);
+  lib.add_sources_private(params.hdrs);
+  lib.add_sources_private(params.srcs);
+
+  lib.include_directories_public(cmake::interface::build, common_include_dirs);
+  lib.include_directories_public(cmake::interface::install, install_includedir);
+
+  lib.compile_options_private(params.copts);
+  lib.compile_options_public(params.defines);
+
+  lib.link_to_public(params.deps);
+
+  lib.linker_options_private(params.linkopts);
+  lib.linker_options_private(default_linkopts);
+
+  auto folder = ide_folder;
+  if (params.testonly) {
+    folder /= "test";
+  } else if (!params.public) {
+    folder /= "internal";
+  }
+  lib.set_folder(folder);
+
+  lib.set_required_cxx_standard(absl::cxx_standard);
+
+  lib.ser_output_name("absl_" + lib.name());
+
+  return lib;
+}
+
+auto add_interface_library(project absl_project, string name,
+                           cc_library_params params) {
+  auto lib = absl_project.add_interface_library(name);
+  lib.include_directories_interface(cmake::interface::build,
+                                    common_include_dirs);
+  lib.include_directories_interface(cmake::interface::install,
+                                    install_includedir);
+
+  lib.link_to_interface(params.deps);
+
+  lib.linker_options_private(params.linkopts);
+  lib.linker_options_private(default_linkopts);
+  lib.compile_definitions_public(params.defines);
+
+  return lib;
+}
+
+export {
+  auto cc_library(project absl_project, string name, cc_library_params params) {
+    if (params.testonly.equals_to(true) && !absl::run_tests) {
+      return;
+    }
+
+    if (!absl::enable_install) {
+      name = "absl_" += name;
+    }
+
+    params.srcs.remove_matching("*.h");
+    params.srcs.remove_matching("*.inc");
+
+    auto is_interface = params.srcs.empty();
+    auto lib = is_interface ? add_interface_library(absl_project, name, params)
+                            : add_library(absl_project, name, params);
+
+    if (!params.testonly && absl::enable_install) {
+      cmake::install_targets(
+          lib, {.runtime = {.destination = absl::install_bindir},
+                .library = {.destination = absl::install_libdir},
+                .archive = {.destination = absl::install_libdir}});
+    }
+
+    absl_project.add_alias_library(lib, "absl::" + lib.name());
+  }
+
+  class cc_test_params {
+    list<string> srcs;
+    list<library> deps;
+    list<string> copts;
+    list<string> defines;
+    list<string> linkopts;
+  };
+
+  auto cc_test(project absl_project, string name, cc_test_params params) {
+    if (!absl::run_tests) {
+      return;
+    }
+
+    auto exec = absl_project.add_executable(name);
+    exec.add_sources_private(params.srcs);
+
+    exec.include_directories_public(absl::common_include_dirs);
+    exec.include_directories_private(gmock::include_dirs + gtest::include_dirs);
+
+    exec.compile_definitions_public(params.defines);
+    exec.compile_options_private(params.copts);
+
+    exec.link_to_public(params.deps);
+    exec.linker_options_private(params.linkopts);
+
+    exec.set_folder(ide_folder / "test");
+
+    exec.set_required_cxx_standard(absl::cxx_standard);
+
+    cmake::add_test(exec.name(), exec.name());
+  }
+
+  auto check_target(string name) {
+    if (!cmake::is_target(name)) {
+      cmake::fatal_error("ABSL: compiling absl requires a " + name +
+                         " CMake target in your project, "
+                         "see CMake/README.md for more details")
+    }
+  }
+}
+}  // namespace absl

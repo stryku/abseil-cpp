@@ -1,0 +1,201 @@
+import AbseilHelpers;
+import AbseilConfigureCopts;
+
+int main() {
+  auto threads = cmake::get_library("Threads::Threads");
+  auto gtest = cmake::get_library("gtest");
+  auto gtest_main = cmake::get_library("gtest_main");
+
+  auto config =
+      absl::cc_library("config", {.hdrs = {"config.h", "policy_checks.h"},
+                                  .copts = absl::default_copts,
+                                  .public = true});
+
+  auto core_headers = absl::cc_library(
+      "core_headers",
+      {.hdrs = {"attributes.h", "const_init.h", "macros.h", "optimization.h",
+                "port.h", "thread_annotations.h"},
+       .copts = absl::default_copts,
+       .deps = {config},
+       .public = true});
+
+  auto spinlock_wait = absl::cc_library(
+      "spinlock_wait",
+      {.hdrs = {"internal/scheduling_mode.h", "internal/spinlock_wait.h"},
+       .srcs = {"internal/spinlock_akaros.inc", "internal/spinlock_linux.inc",
+                "internal/spinlock_posix.inc", "internal/spinlock_wait.cc",
+                "internal/spinlock_win32.inc"},
+       .copts = absl::default_copts,
+       .deps = {core_headers}});
+
+  auto dynamic_annotations = absl::cc_library(
+      "dynamic_annotations", {.hdrs = {"dynamic_annotations.h"},
+                              .srcs = {"dynamic_annotations.cc"},
+                              .copts = absl::default_copts,
+                              .defines = {"__CLANG_SUPPORT_DYN_ANNOTATION__"},
+                              .public = true});
+
+  auto malloc_internal = absl::cc_library(
+      "malloc_internal",
+      {.hdrs = {"internal/direct_mmap.h", "internal/low_level_alloc.h"},
+       .srcs = {"internal/low_level_alloc.cc"},
+       .copts = absl::default_copts,
+       .deps = {base, config, core_headers, dynamic_annotations, spinlock_wait,
+                threads}});
+
+  auto base_internal = absl::cc_library(
+      "base_internal",
+      {.hdrs = {"internal/hide_ptr.h", "internal/identity.h",
+                "internal/inline_variable.h", "internal/invoke.h"},
+       .copts = absl::default_copts});
+
+  auto base = absl::cc_library(
+      "base",
+      {.hdrs = {"call_once.h", "casts.h", "internal/atomic_hook.h",
+                "internal/cycleclock.h", "internal/low_level_scheduling.h",
+                "internal/per_thread_tls.h", "internal/raw_logging.h",
+                "internal/spinlock.h", "internal/sysinfo.h",
+                "internal/thread_identity.h", "internal/tsan_mutex_interface.h",
+                "internal/unscaledcycleclock.h", "log_severity.h"},
+       .srcs = {"internal/cycleclock.cc", "internal/raw_logging.cc",
+                "internal/spinlock.cc", "internal/sysinfo.cc",
+                "internal/thread_identity.cc", "internal/unscaledcycleclock.cc",
+                "log_severity.cc"},
+       .copts = absl::default_copts,
+       .deps = {base_internal, config, core_headers, dynamic_annotations,
+                spinlock_wait, type_traits, threads},
+       .public = true});
+
+  auto throw_delegate = absl::cc_library(
+      "throw_delegate", {.hdrs = {"internal/throw_delegate.h"},
+                         .srcs = {"internal/throw_delegate.cc"},
+                         .copts = absl::default_copts + absl::exceptions_flag,
+                         .deps = {base}});
+
+  auto exception_testing = absl::cc_library(
+      "exception_testing", {.hdrs = {"internal/exception_testing.h"},
+                            .copts = absl::default_copts,
+                            .deps = {config, threads},
+                            .testonly = true});
+
+  auto pretty_function = absl::cc_library(
+      "pretty_function",
+      {.hdrs = {"internal/pretty_function.h"}, .copts = absl::default_copts});
+
+  auto exception_safety_testing = absl::cc_library(
+      "exception_safety_testing",
+      {.hdrs = {"internal/exception_safety_testing.h"},
+       .srcs = {"internal/exception_safety_testing.cc"},
+       .copts = absl::default_copts + absl::exceptions_flag,
+       .linkopts = absl::exceptions_flag_linkopts.deps =
+           {config, pretty_function, memory, meta, strings, utility, gtest},
+       .testonly = true});
+
+  absl::cc_test("absl_exception_safety_testing_test",
+                {.srcs = {"exception_safety_testing_test.cc"},
+                 .copts = absl::test_copts + absl::exceptions_flag,
+                 .linkopts = absl::exceptions_flag_linkopts.deps = {
+                     exception_safety_testing, memory, gtest_main}});
+
+  absl::cc_test("atomic_hook_test", {.srcs = {"internal/atomic_hook_test.cc"},
+                                     .copts = absl::test_copts,
+                                     .deps = {base, core_headers, gtest_main}});
+
+  absl::cc_test("bit_cast_test", {.srcs = {"bit_cast_test.cc"},
+                                  .copts = absl::test_copts,
+                                  .deps = {base, core_headers, gtest_main}});
+
+  absl::cc_test("throw_delegate_test",
+                {.srcs = {"throw_delegate_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {base, throw_delegate, gtest_main}});
+
+  absl::cc_test(
+      "inline_variable_test",
+      {.srcs = {"internal/inline_variable_testing.h", "inline_variable_test.cc",
+                "inline_variable_test_a.cc", "inline_variable_test_b.cc"},
+       .copts = absl::test_copts,
+       .deps = {base_internal, gtest_main}});
+
+  absl::cc_test("invoke_test",
+                {.srcs = {"invoke_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {base_internal, memory, strings, gmock, gtest_main}});
+
+  absl::cc_library(
+      "spinlock_test_common",
+      {.srcs = {"spinlock_test_common.cc"},
+       .copts = absl::default_copts,
+       .deps = {base, core_headers, spinlock_wait, synchronization, gtest},
+       .testonly = true});
+
+  absl::cc_test("spinlock_test", {.srcs = {"spinlock_test_common.cc"},
+                                  .copts = absl::test_copts,
+                                  .deps = {base, core_headers, spinlock_wait,
+                                           synchronization, gtest_main}});
+
+  auto endian = absl::cc_library(
+      "endian", {.hdrs = {"internal/endian.h", "internal/unaligned_access.h"},
+                 .copts = absl::default_copts,
+                 .deps = {config, core_headers},
+                 .public = true});
+
+  absl::cc_test("endian_test", {.srcs = {"internal/endian_test.cc"},
+                                .copts = absl::test_copts,
+                                .deps = {base, config, endian, gtest_main}});
+
+  absl::cc_test("config_test", {.srcs = {"config_test.cc"},
+                                .copts = absl::test_copts,
+                                .deps = {config, synchronization, gtest_main}});
+
+  absl::cc_test("call_once_test",
+                {.srcs = {"call_once_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {base, core_headers, synchronization, gtest_main}});
+
+  absl::cc_test("raw_logging_test", {.srcs = {"raw_logging_test.cc"},
+                                     .copts = absl::test_copts,
+                                     .deps = {base, strings, gtest_main}});
+
+  absl::cc_test("sysinfo_test", {.srcs = {"internal/sysinfo_test.cc"},
+                                 .copts = absl::test_copts,
+                                 .deps = {base, synchronization, gtest_main}});
+
+  absl::cc_test("low_level_alloc_test",
+                {.srcs = {"internal/low_level_alloc_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {malloc_internal, threads}});
+
+  absl::cc_test(
+      "thread_identity_test",
+      {.srcs = {"internal/thread_identity_test.cc"},
+       .copts = absl::test_copts,
+       .deps = {base, core_headers, synchronization, threads, gtest_main}});
+
+  auto bits = absl::cc_library("bits", {.hdrs = {"internal/bits.h"},
+                                        .copts = absl::default_copts,
+                                        .deps = {core_headers}});
+
+  absl::cc_test("bits_test", {.srcs = {"internal/bits_test.cc"},
+                              .copts = absl::test_copts,
+                              .deps = {bits, gtest_main}});
+
+  auto scoped_set_env = absl::cc_library(
+      "scoped_set_env", {.hdrs = {"internal/scoped_set_env.h"},
+                         .srcs = {"internal/scoped_set_env.cc"},
+                         .copts = absl::default_copts,
+                         .deps = {base}});
+
+  absl::cc_test("scoped_set_env_test",
+                {.srcs = {"internal/scoped_set_env_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {scoped_set_env, gtest_main}});
+
+  absl::cc_test("cmake_thread_test", {.srcs = {"internal/cmake_thread_test.cc"},
+                                      .copts = absl::test_copts,
+                                      .deps = {base}});
+
+  absl::cc_test("log_severity_test", {.srcs = {"log_severity_test.cc"},
+                                      .copts = absl::test_copts,
+                                      .deps = {base, gmock, gtest_main}});
+}

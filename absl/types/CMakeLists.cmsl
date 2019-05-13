@@ -1,0 +1,136 @@
+import AbseilHelpers;
+import AbseilConfigureCopts;
+
+int main() {
+  auto any = absl::cc_library(
+      "any",
+      {.hdrs = {"any.h"},
+       .copts = absl::default_copts,
+       .deps = {bad_any_cast, config, core_headers, type_traits, utility},
+       .public = true});
+
+  auto bad_any_cast =
+      absl::cc_library("bad_any_cast", {.hdrs = {"bad_any_cast.h"},
+                                        .copts = absl::default_copts,
+                                        .deps = {bad_any_cast_impl config},
+                                        .public = true});
+
+  auto bad_any_cast_impl =
+      absl::cc_library("bad_any_cast_impl",
+                       {.srcs = {"bad_any_cast.h", "bad_any_cast.h"},
+                        .copts = absl::default_copts + absl::exceptions_flag,
+                        .linkopts = absl::exceptions_flag_linkopts,
+                        .deps = {base, config}});
+
+  absl::cc_test("any_test_noexceptions",
+                {.srcs = {"any_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {any, base, config, exception_testing,
+                          test_instance_tracker, gmock_main}});
+
+  absl::cc_test("any_exception_safety_test",
+                {.srcs = {"any_exception_safety_test.cc"},
+                 .copts = absl::test_copts + absl::exceptions_flag,
+                 .linkopts = absl::exceptions_flag_linkopts,
+                 .deps = {any, exception_safety_testing, gmock_main}});
+
+  auto span = absl::cc_library(
+      "span", {.hdrs = {"span.h"},
+               .srcs = {"internal/span.h"},
+               .copts = absl::default_copts,
+               .deps = {algorithm, core_headers, throw_delegate, type_traits},
+               .public = true});
+
+  absl::cc_test("span_test",
+                {.srcs = {"span_test.cc"},
+                 .copts = absl::test_copts + absl::exceptions_flag,
+                 .linkopts = absl::exceptions_flag_linkopts,
+                 .deps = {span, base, config, core_headers, exception_testing,
+                          fixed_array, inlined_vector, hash_testing, strings,
+                          gmock_main}});
+
+  absl::cc_test("span_test_noexceptions",
+                {.srcs = {"span_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {span, base, config, core_headers, exception_testing,
+                          fixed_array, inlined_vector, hash_testing, strings,
+                          gmock_main}});
+
+  auto optional = absl::cc_library(
+      "optional", {.hdrs = {"optional.h"},
+                   .srcs = {"internal/optional.h"},
+                   .copts = absl::default_copts,
+                   .deps = {bad_optional_access, base_internal, config,
+                            core_headers, memory, type_traits, utility},
+                   .public = true});
+
+  auto bad_optional_access =
+      absl::cc_library("bad_optional_access",
+                       {.hdrs = {"bad_optional_access.h"},
+                        .srcs = {"internal/bad_optional_access.h"},
+                        .copts = absl::default_copts + absl::exceptions_flag,
+                        .linkopts = absl::exceptions_flag_linkopts,
+                        .deps = {base, config},
+                        .public = true});
+
+  auto bad_variant_access =
+      absl::cc_library("bad_variant_access",
+                       {.hdrs = {"bad_variant_access.h"},
+                        .srcs = {"bad_variant_access.h"},
+                        .copts = absl::default_copts + absl::exceptions_flag,
+                        .linkopts = absl::exceptions_flag_linkopts,
+                        .deps = {base, config},
+                        .public = true});
+
+  absl::cc_test(
+      "optional_test",
+      {.srcs = {"optional_test.cc"},
+       .copts = absl::test_copts + absl::exceptions_flag,
+       .linkopts = absl::exceptions_flag_linkopts,
+       .deps = {optional, base, config, type_traits, strings, gmock_main}});
+
+  absl::cc_test("optional_exception_safety_test",
+                {.srcs = {"optional_exception_safety_test.cc"},
+                 .copts = absl::test_copts + absl::exceptions_flag,
+                 .linkopts = absl::exceptions_flag_linkopts,
+                 .deps = {optional, exception_safety_testing, gmock_main}});
+
+  auto variant = absl::cc_library(
+      "variant", {.hdrs = {"variant.h"},
+                  .srcs = {"internal/variant.h"},
+                  .copts = absl::default_copts + absl::exceptions_flag,
+                  .linkopts = absl::exceptions_flag_linkopts,
+                  .deps = {bad_variant_access, base_internal, config,
+                           core_headers, type_traits, utility},
+                  .public = true});
+
+  absl::cc_test("variant_test",
+                {.srcs = {"variant_test.cc"},
+                 .copts = absl::test_copts + absl::exceptions_flag,
+                 .linkopts = absl::exceptions_flag_linkopts,
+                 .deps = {variant, config, core_headers, memory, type_traits,
+                          strings, gmock_main}});
+
+  auto compare =
+      absl::cc_library("compare", {.hdrs = {"compare.h"},
+                                   .copts = absl::default_copts,
+                                   .deps = {core_headers, type_traits},
+                                   .public = true});
+
+  absl::cc_test("compare_test", {.srcs = {"compare_test.cc"},
+                                 .copts = absl::test_copts,
+                                 .deps = {base, compare, gmock_main}});
+
+  const auto compiler_info = cmake::get_cxx_compiler_info();
+  const auto compiling_with_gcc_4_8_or_less =
+      compiler_info.id == cmake::cxx_compiler_id::gnu &&
+      compiler_info.version < version(4.9);
+  if (!compiling_with_gcc_4_8_or_less) {
+    absl::cc_test("variant_exception_safety_test",
+                  {.srcs = {"variant_exception_safety_test.cc"},
+                   .copts = absl::test_copts + absl::exceptions_flag,
+                   .linkopts = absl::exceptions_flag_linkopts,
+                   .deps = {variant, config, exception_safety_testing, memory,
+                            gmock_main}});
+  }
+}

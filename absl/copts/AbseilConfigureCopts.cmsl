@@ -1,0 +1,64 @@
+import GENERATED_AbseilCopts;
+
+export {
+  namespace absl {
+  list<string> default_copts;
+  list<string> test_copts;
+  list<string> exceptions_flag;
+  list<string> lsan_linkopts;
+  list<string> default_linkopts;
+  list<string> exceptions_flag_linkopts;
+  bool have_lsan = false;
+
+  namespace copts {
+  void setup() {
+    const auto compiler_info = cmake::get_cxx_compiler_info();
+
+    if (compiler_info.id == cmake::cxx_compiler_id::gnu) {
+      default_copts = gcc_flags;
+      test_copts = gcc_flags + gcc_test_flags;
+      exceptions_flag = gcc_exceptions_flags;
+    } else if ({cmake::cxx_compiler_id::clang,
+                cmake::cxx_compiler_id::apple_clang}
+                   .contains(compiler_info.id)) {
+      if (cmake::msvc) {
+        default_copts = clang_cl_flags;
+        test_copts = clang_cl_flags + clang_cl_test_flags;
+        exceptions_flag = clang_cl_exceptions_flags;
+        default_linkopts = mvsc_linkopts;
+      } else {
+        default_copts = llvm_flags;
+        test_copts = llvm_flags + llvm_test_flags;
+        exceptions_flag = llvm_exceptions_flags;
+        if (compiler_info.id == cmake::cxx_compiler_id::clang &&
+            compiler_info.version >= version(3.5)) {
+          lsan_linkopts = {"-fsanitize=leak"};
+          have_lsan = true;
+        }
+      }
+    } else if (compiler_info.id == cmake::cxx_compiler_id::msvc) {
+      default_copts = msvc_flags;
+      test_copts = msvc_flags + msvc_test_flags;
+      exceptions_flag = msvc_exceptions_flags;
+      default_linkopts = mvsc_linkopts;
+    } else {
+      cmake::warning("Unknown compiler: " + cmake::get_cxx_compiler() +
+                     ". Building with no default flags");
+      default_copts.clear();
+      test_copts.clear();
+      exceptions_flag.clear();
+    }
+
+    const auto standard = cmake::get_cxx_standard();
+    if (!standard) {
+      cmake::status("No cmake::cxx_standard set, assuming C++11");
+      absl::cxx_standard = 11;
+    } else if (*standard == 98) {
+      cmake::fatal_error("Abseil requires at least C++11");
+    } else {
+      absl::cxx_standard = *standard;
+    }
+  }
+  }  // namespace copts
+  }  // namespace absl
+}

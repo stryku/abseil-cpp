@@ -1,0 +1,66 @@
+import AbseilHelpers;
+import AbseilConfigureCopts;
+
+int main() {
+  auto time = absl::cc_library(
+      "time", {.hdrs = {"civil_time.h", "clock.h", "time.h"},
+               .srcs = {"civil_time.cc", "clock.cc", "duration.cc", "format.cc",
+                        "internal/get_current_time_chrono.inc",
+                        "internal/get_current_time_posix.inc", "time.cc"},
+               .copts = absl::default_copts,
+               .deps = {base, base, core_headers, int128, strings, civil_time,
+                        time_zone},
+               .public = true});
+
+  auto civil_time = absl::cc_library(
+      "civil_time", {.hdrs = {"internal/cctz/include/cctz/civil_time.h",
+                              "internal/cctz/include/cctz/civil_time_detail.h"},
+                     .srcs = {"internal/cctz/src/civil_time_detail.cc"},
+                     .copts = absl::default_copts});
+
+  list<library> time_zone_deps;
+  if (cmake::get_platform_id() == cmake::platform_id::darwin) {
+    auto core_foundation = cmake::find_library("CoreFoundation");
+    time_zone_deps += core_foundation.libraries();
+  }
+
+  auto time_zone = absl::cc_library(
+      "time_zone", {.hdrs = {"internal/cctz/include/cctz/time_zone.h",
+                             "internal/cctz/include/cctz/zone_info_source.h"},
+                    .srcs = {"internal/cctz/src/time_zone_fixed.cc",
+                             "internal/cctz/src/time_zone_fixed.h",
+                             "internal/cctz/src/time_zone_format.cc",
+                             "internal/cctz/src/time_zone_if.cc",
+                             "internal/cctz/src/time_zone_if.h",
+                             "internal/cctz/src/time_zone_impl.cc",
+                             "internal/cctz/src/time_zone_impl.h",
+                             "internal/cctz/src/time_zone_info.cc",
+                             "internal/cctz/src/time_zone_info.h",
+                             "internal/cctz/src/time_zone_libc.cc",
+                             "internal/cctz/src/time_zone_libc.h",
+                             "internal/cctz/src/time_zone_lookup.cc",
+                             "internal/cctz/src/time_zone_posix.cc",
+                             "internal/cctz/src/time_zone_posix.h",
+                             "internal/cctz/src/tzfile.h",
+                             "internal/cctz/src/zone_info_source.cc"},
+                    .copts = absl::default_copts,
+                    .deps = time_zone_deps});
+
+  auto test_util = absl::cc_library(
+      "test_util",
+      {.hdrs = {"internal/test_util.h"},
+       .srcs = {"internal/test_util.cc", "internal/zoneinfo.cc"},
+       .copts = absl::default_copts,
+       .deps = time,
+       base,
+       time_zone,
+       gmock},
+      .testonly = true);
+
+  absl::cc_test("time_test", {.srcs = {"civil_time_test.cc", "clock_test.cc",
+                                       "duration_test.cc", "format_test.cc",
+                                       "time_test.cc", "time_zone_test.cc"},
+                              .copts = absl::test_copts,
+                              .deps = {test_util, time, base, config,
+                                       core_headers, time_zone gmock_main}});
+}

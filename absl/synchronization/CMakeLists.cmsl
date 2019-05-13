@@ -1,0 +1,72 @@
+import AbseilHelpers;
+import AbseilConfigureCopts;
+
+int main() {
+  auto graphcycles_internal = absl::cc_library(
+      "graphcycles_internal",
+      {.hdrs = {"internal/graphcycles.h"},
+       .srcs = {"internal/graphcycles.cc"},
+       .copts = absl::default_copts,
+       .deps = {base, base_internal, core_headers, malloc_internal}});
+
+  auto synchronization = absl::cc_library(
+      "synchronization",
+      {.hdrs = {"barrier.h", "blocking_counter.h",
+                "internal/create_thread_identity.h",
+                "internal/kernel_timeout.h", "internal/mutex_nonprod.inc",
+                "internal/per_thread_sem.h", "internal/waiter.h", "mutex.h",
+                "notification.h"},
+       .srcs = {"barrier.cc", "blocking_counter.cc",
+                "internal/create_thread_identity.cc",
+                "internal/per_thread_sem.cc", "internal/waiter.cc",
+                "notification.cc", "mutex.cc"},
+       .copts = absl::default_copts,
+       .deps = {graphcycles_internal, base, base_internal, config, core_headers,
+                dynamic_annotations, malloc_internal, stacktrace, symbolize,
+                time, Threads::Threads}});
+
+  absl::cc_test("blocking_counter_test",
+                {.srcs = {"blocking_counter_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {synchronization, time, gmock_main}});
+
+  absl::cc_test("graphcycles_test", {.srcs = {"internal/graphcycles_test.cc"},
+                                     .copts = absl::test_copts,
+                                     .deps = {graphcycles_internal, base,
+                                              core_headers, gmock_main}});
+
+  auto thread_pool =
+      absl::cc_library("thread_pool", {.hdrs = {"internal/thread_pool.h"},
+                                       .copts = absl::default_copts,
+                                       .deps = {synchronization, core_headers},
+                                       .testonly = true});
+
+  absl::cc_test("mutex_test",
+                {.srcs = {"mutex_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {synchronization, thread_pool, base, core_headers,
+                          memory, time, gmock_main}});
+
+  absl::cc_test("notification_test",
+                {.srcs = {"notification_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {synchronization, time, gmock_main}});
+
+  auto per_thread_sem_test_common =
+      absl::cc_library("per_thread_sem_test_common",
+                       {.hdrs = {"internal/per_thread_sem_test.h"},
+                        .copts = absl::default_copts,
+                        .deps = {synchronization, base, strings, time, gmock},
+                        .testonly = true});
+
+  absl::cc_test("per_thread_sem_test",
+                {.srcs = {"internal/per_thread_sem_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {per_thread_sem_test_common, synchronization, base,
+                          strings, time, gmock_main}});
+
+  absl::cc_test("lifetime_test",
+                {.srcs = {"lifetime_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {synchronization, base, core_headers}});
+}

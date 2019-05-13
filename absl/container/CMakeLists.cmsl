@@ -1,0 +1,369 @@
+import AbseilHelpers;
+import AbseilConfigureCopts;
+
+int main() {
+  auto threads = cmake::get_library("Threads::Threads");
+  auto gtest = cmake::get_library("gtest");
+  auto gtest_main = cmake::get_library("gtest_main");
+
+  auto memory = cmake::get_library("absl::memory");
+  auto utility = cmake::get_library("absl::utility");
+
+  auto compressed_tuple = absl::cc_library(
+      "compressed_tuple", {.hdrs = {"internal/compressed_tuple.h"},
+                           .copts = absl::default_copts,
+                           .deps = {utility},
+                           .public = true});
+
+  absl::cc_test("compressed_tuple_test",
+                {.srcs = {"internal/compressed_tuple_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {compressed_tuple, memory, utility, gtest_main}});
+
+  auto fixed_array = absl::cc_library(
+      "fixed_array", {.hdrs = {"fixed_array.h"},
+                      .copts = absl::default_copts,
+                      .deps = {compressed_tuple, algorithm, core_headers,
+                               dynamic_annotations, throw_delegate, memory},
+                      .public = true});
+
+  absl::cc_test(
+      "fixed_array_test",
+      {.srcs = {"fixed_array_test.cc"},
+       .copts = absl::test_copts + absl::exceptions_flag,
+       .linkopts = absl::exceptions_flag_linkopts.deps = {
+           fixed_array, exception_testing, hash_testing, memory, gtest_main}});
+
+  absl::cc_test("fixed_array_test_noexceptions",
+                {.srcs = {"fixed_array_test.cc.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {fixed_array, exception_testing, hash_testing, memory,
+                          gtest_main}});
+
+  absl::cc_test("fixed_array_exception_safety_test",
+                {.srcs = {"fixed_array_exception_safety_test.cc"},
+                 .copts = absl::test_copts + absl::exceptions_flag,
+                 .linkopts = absl::exceptions_flag_linkopts.deps = {
+                     fixed_array, exception_safety_testing, gtest_main}});
+
+  auto inlined_vector_internal = absl::cc_library(
+      "inlined_vector_internal", {.hdrs = {"internal/inlined_vector.h"},
+                                  .copts = absl::default_copts,
+                                  .deps =
+                                      {
+                                          compressed_tuple,
+                                          type_traits,
+                                      },
+                                  .public = true});
+
+  auto inlined_vector = absl::cc_library(
+      "inlined_vector",
+      {.hdrs = {"inlined_vector.h"},
+       .copts = absl::default_copts,
+       .deps = {algorithm, core_headers, inlined_vector_internal,
+                throw_delegate, memory},
+       .public = true});
+
+  auto counting_allocator = absl::cc_library(
+      "counting_allocator", {.hdrs = {"internal/counting_allocator.h"},
+                             .copts = absl::default_copts});
+
+  absl::cc_test("inlined_vector_test",
+                {.srcs = {"inlined_vector_test.cc"},
+                 .copts = absl::test_copts + absl::exceptions_flag,
+                 .linkopts = absl::exceptions_flag_linkopts.deps = {
+                     counting_allocator, inlined_vector, test_instance_tracker,
+                     base, core_headers, exception_testing, hash_testing,
+                     memory, strings, gmock_main}});
+
+  absl::cc_test(
+      "inlined_vector_test_noexceptions",
+      {.srcs = {"inlined_vector_test.cc"},
+       .copts = absl::test_copts,
+       .deps = {counting_allocator, inlined_vector, test_instance_tracker, base,
+                core_headers, exception_testing, hash_testing, memory, strings,
+                gmock_main}});
+
+  absl::cc_test("inlined_vector_exception_safety_test",
+                {.srcs = {"inlined_vector_exception_safety_test.cc"},
+                 .copts = absl::test_copts + absl::exceptions_flag,
+                 .linkopts = absl::exceptions_flag_linkopts.deps = {
+                     inlined_vector, exception_safety_testing, gmock_main}});
+
+  absl::cc_test("test_instance_tracker_test",
+                {.srcs = {"internal/test_instance_tracker_test.cc"},
+                 .copts = absl::default_copts,
+                 .deps = {test_instance_tracker, gmock_main}});
+
+  auto flat_hash_map = absl::cc_library(
+      "flat_hash_map", {.hdrs = {"flat_hash_map.h"},
+                        .copts = absl::default_copts,
+                        .deps = {container_memory, hash_function_defaults,
+                                 raw_hash_map, algorithm_container, memory},
+                        .public = true});
+
+  absl::cc_test("flat_hash_map_test",
+                {.srcs = {"flat_hash_map_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {flat_hash_map, hash_generator_testing,
+                          unordered_map_constructor_test,
+                          unordered_map_lookup_test, unordered_map_members_test,
+                          unordered_map_modifiers_test, any, gmock_main}});
+
+  auto flat_hash_set = absl::cc_library(
+      "flat_hash_set",
+      {.hdrs = {"flat_hash_set.h"},
+       .copts = absl::default_copts,
+       .deps = {container_memory, hash_function_defaults, raw_hash_set,
+                algorithm_container, core_headers, memory},
+       .public = true});
+
+  absl::cc_test(
+      "flat_hash_map_test",
+      {.srcs = {"flat_hash_map_test.cc"},
+       .copts = absl::test_copts + "-DUNORDERED_SET_CXX17",
+       .deps = {flat_hash_set, hash_generator_testing,
+                unordered_set_constructor_test, unordered_set_lookup_test,
+                unordered_set_members_test, unordered_set_modifiers_test,
+                memory, strings, gmock_main}});
+
+  auto node_hash_map = absl::cc_library(
+      "node_hash_map",
+      {.hdrs = {"node_hash_map.h"},
+       .copts = absl::default_copts,
+       .deps = {container_memory, hash_function_defaults, node_hash_policy,
+                raw_hash_map, algorithm_container, memory},
+       .public = true});
+
+  absl::cc_test("node_hash_map_test",
+                {.srcs = {"node_hash_map_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {hash_generator_testing, node_hash_map, tracked,
+                          unordered_map_constructor_test,
+                          unordered_map_lookup_test, unordered_map_members_test,
+                          unordered_map_modifiers_test, gmock_main}});
+
+  auto node_hash_set = absl::cc_library(
+      "node_hash_set", {.hdrs = {"node_hash_set.h"},
+                        .copts = absl::default_copts,
+                        .deps = {hash_function_defaults, node_hash_policy,
+                                 raw_hash_set, algorithm_container, memory},
+                        .public = true});
+
+  absl::cc_test("node_hash_set_test",
+                {.srcs = {"node_hash_set_test.cc"},
+                 .copts = absl::test_copts + "-DUNORDERED_SET_CXX17",
+                 .deps = {hash_generator_testing, node_hash_set,
+                          unordered_set_constructor_test,
+                          unordered_set_lookup_test, unordered_set_members_test,
+                          unordered_set_modifiers_test, gmock_main}});
+
+  auto container_memory = absl::cc_library(
+      "container_memory", {.hdrs = {"internal/container_memory.h"},
+                           .copts = absl::default_copts,
+                           .deps = {memory, utility},
+                           .public = true});
+
+  absl::cc_test("container_memory_test",
+                {.srcs = {"internal/container_memory_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {container_memory, strings, gmock_main}});
+
+  auto hash_function_defaults = absl::cc_library(
+      "container_memory", {.hdrs = {"internal/hash_function_defaults.h"},
+                           .copts = absl::default_copts,
+                           .deps = {config, hash, strings},
+                           .public = true});
+
+  absl::cc_test("hash_function_defaults_test",
+                {.srcs = {"internal/hash_function_defaults_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {hash_function_defaults, hash, strings, gmock_main}});
+
+  auto hash_generator_testing = absl::cc_library(
+      "hash_generator_testing", {.hdrs = {"internal/hash_generator_testing.h"},
+                                 .srcs = {"internal/hash_generator_testing.cc"},
+                                 .copts = absl::default_copts,
+                                 .deps = {hash_policy_testing, meta, strings},
+                                 .testonly = true});
+
+  auto hash_policy_testing = absl::cc_library(
+      "hash_policy_testing", {.hdrs = {"internal/hash_generator_testing.h"},
+                              .copts = absl::default_copts,
+                              .deps = {hash, strings},
+                              .testonly = true});
+
+  absl::cc_test("hash_policy_testing_test",
+                {.srcs = {"internal/hash_policy_testing_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {hash_policy_testing, gmock_main}});
+
+  auto hash_policy_traits = absl::cc_library(
+      "hash_policy_traits", {.hdrs = {"internal/hash_policy_traits.h"},
+                             .copts = absl::default_copts,
+                             .deps =
+                                 {
+                                     meta,
+                                 },
+                             .public = true});
+
+  absl::cc_test("hash_policy_traits_test",
+                {.srcs = {"internal/hash_policy_traits_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {hash_policy_traits, gmock_main}});
+
+  auto hashtablez_sampler = absl::cc_library(
+      "hashtablez_sampler",
+      {.hdrs = {"internal/hashtablez_sampler.h"},
+       .srcs = {"internal/hashtablez_sampler.cc",
+                "internal/hashtablez_sampler_force_weak_definition.cc"},
+       .copts = absl::default_copts,
+       .deps = {base, have_sse, synchronization}});
+
+  absl::cc_test("hashtablez_sampler_test",
+                {.srcs = {"internal/hashtablez_sampler_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {hashtablez_sampler, have_sse, gmock_main}});
+
+  auto hashtable_debug = absl::cc_library(
+      "hashtable_debug", {.hdrs = {"internal/hashtable_debug.h"},
+                          .copts = absl::default_copts,
+                          .deps = {hashtable_debug_hooks}});
+
+  auto hashtable_debug_hooks = absl::cc_library(
+      "hashtable_debug_hooks", {.hdrs = {"internal/hashtable_debug_hooks.h"},
+                                .copts = absl::default_copts,
+                                .public = true});
+
+  auto have_sse = absl::cc_library("have_sse", {.hdrs = {"internal/have_sse.h"},
+                                                .copts = absl::default_copts});
+
+  auto node_hash_policy = absl::cc_library(
+      "node_hash_policy", {.hdrs = {"internal/node_hash_policy.h"},
+                           .copts = absl::default_copts,
+                           .public = true});
+
+  absl::cc_test("node_hash_policy_test",
+                {.srcs = {"internal/node_hash_policy_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {hash_policy_traits, node_hash_policy, gmock_main}});
+
+  auto raw_hash_map = absl::cc_library(
+      "raw_hash_map", {.hdrs = {"internal/raw_hash_map.h"},
+                       .copts = absl::default_copts,
+                       .deps = {container_memory, raw_hash_set},
+                       .public = true});
+
+  auto container_common = absl::cc_library(
+      "container_common", {.hdrs = {"internal/container_common.h"},
+                           .copts = absl::default_copts,
+                           .deps = {type_traits},
+                           .public = true});
+
+  auto raw_hash_set = absl::cc_library(
+      "raw_hash_set",
+      {.hdrs = {"internal/raw_hash_set.h"},
+       .srcs = {"internal/raw_hash_set.cc"}.copts = absl::default_copts,
+       .deps = {bits, compressed_tuple, config, container_common,
+                container_memory, core_headers, endian, hash_policy_traits,
+                hashtable_debug_hooks, have_sse, layout, memory, meta, optional,
+                utility, hashtablez_sampler},
+       .public = true});
+
+  absl::cc_test("raw_hash_set_test",
+                {.srcs = {"internal/raw_hash_set_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {container_memory, hash_function_defaults,
+                          hash_policy_testing, hashtable_debug, raw_hash_set,
+                          base, core_headers, strings, gmock_main}});
+
+  absl::cc_test("raw_hash_set_allocator_test",
+                {.srcs = {"internal/raw_hash_set_allocator_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {raw_hash_set, tracked, core_headers, gmock_main}});
+
+  auto layout = absl::cc_library(
+      "layout", {.hdrs = {"internal/layout.h"},
+                 .copts = absl::default_copts,
+                 .deps = {core_headers, meta, strings, span, utility},
+                 .public = true});
+
+  absl::cc_test("layout_test",
+                {.srcs = {"internal/layout_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {layout, base, core_headers, span, gmock_main}});
+
+  auto tracked = absl::cc_library("tracked", {.hdrs = {"internal/tracked.h"},
+                                              .copts = absl::default_copts,
+                                              .testonly = true});
+
+  auto unordered_map_constructor_test = absl::cc_library(
+      "unordered_map_constructor_test",
+      {.hdrs = {"internal/unordered_map_constructor_test.h"},
+       .copts = absl::default_copts,
+       .deps = {hash_generator_testing, hash_policy_testing, gmock},
+       .testonly = true});
+
+  auto unordered_map_lookup_test = absl::cc_library(
+      "unordered_map_lookup_test",
+      {.hdrs = {"internal/unordered_map_lookup_test.h"},
+       .copts = absl::default_copts,
+       .deps = {hash_generator_testing, hash_policy_testing, gmock},
+       .testonly = true});
+
+  auto unordered_map_members_test =
+      absl::cc_library("unordered_map_members_test",
+                       {.hdrs = {"internal/unordered_map_members_test.h"},
+                        .copts = absl::default_copts,
+                        .deps = {type_traits, gmock},
+                        .testonly = true});
+
+  auto unordered_map_modifiers_test = absl::cc_library(
+      "unordered_map_modifiers_test",
+      {.hdrs = {"internal/unordered_map_modifiers_test.h"},
+       .copts = absl::default_copts,
+       .deps = {hash_generator_testing, hash_policy_testing, gmock},
+       .testonly = true});
+
+  auto unordered_set_constructor_test = absl::cc_library(
+      "unordered_set_constructor_test",
+      {.hdrs = {"internal/unordered_set_constructor_test.h"},
+       .copts = absl::default_copts,
+       .deps = {hash_generator_testing, hash_policy_testing, gmock},
+       .testonly = true});
+
+  auto unordered_set_lookup_test = absl::cc_library(
+      "unordered_set_lookup_test",
+      {.hdrs = {"internal/unordered_set_lookup_test.h"},
+       .copts = absl::default_copts,
+       .deps = {hash_generator_testing, hash_policy_testing, gmock},
+       .testonly = true});
+
+  auto unordered_set_members_test =
+      absl::cc_library("unordered_set_members_test",
+                       {.hdrs = {"internal/unordered_set_members_test.h"},
+                        .copts = absl::default_copts,
+                        .deps = {type_traits, gmock},
+                        .testonly = true});
+
+  auto unordered_set_modifiers_test = absl::cc_library(
+      "unordered_set_modifiers_test",
+      {.hdrs = {"internal/unordered_set_modifiers_test.h"},
+       .copts = absl::default_copts,
+       .deps = {hash_generator_testing, hash_policy_testing, gmock},
+       .testonly = true});
+
+  absl::cc_test("unordered_set_test",
+                {.srcs = {"internal/unordered_set_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {unordered_set_constructor_test,
+                          unordered_set_lookup_test, unordered_set_members_test,
+                          unordered_set_modifiers_test, gmock_main}});
+
+  absl::cc_test("unordered_map_test",
+                {.srcs = {"internal/unordered_map_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {unordered_map_constructor_test,
+                          unordered_map_lookup_test, unordered_map_members_test,
+                          unordered_map_modifiers_test, gmock_main}});
+}

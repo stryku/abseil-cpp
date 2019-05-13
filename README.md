@@ -1,3 +1,7 @@
+# This is a repository for testing complex CMakeSL scripts. DO NOT use this repo if you want to use Abseil libraries.
+
+---
+
 # Abseil - C++ Common Libraries
 
 The repository contains the Abseil C++ library code. Abseil is an open-source

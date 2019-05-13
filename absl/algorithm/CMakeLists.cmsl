@@ -1,0 +1,28 @@
+import AbseilHelpers;
+import AbseilConfigureCopts;
+
+int main() {
+  auto algo_lib = absl::cc_library(
+      "algorithm",
+      {.hdrs = {"algorithm.h"}, .copts = absl::default_copts, .public = true});
+  absl::cc_test("algorithm_test",
+                {.srcs = {"algorithm_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {algo_lib, cmake::get_library("gmock_main")}});
+
+  auto algo_container_lib = absl::cc_library(
+      "algorithm_container",
+      {.hdrs = {"container.h"},
+       .copts = absl::default_copts,
+       .deps = {algo_lib, cmake::get_library("absl::code_headers"),
+                cmake::get_library("absl::meta")}});
+
+  absl::cc_test("container_test",
+                {.srcs = {"container_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {algo_container_lib, cmake::get_library("absl::base"),
+                          cmake::get_library("absl::core_headers"),
+                          cmake::get_library("absl::memory"),
+                          cmake::get_library("absl::span"),
+                          cmake::get_library("gmock_main")}});
+}

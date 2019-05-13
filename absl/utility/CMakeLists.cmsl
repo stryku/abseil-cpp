@@ -1,0 +1,15 @@
+import AbseilHelpers;
+import AbseilConfigureCopts;
+
+int main() {
+  auto utility =
+      absl::cc_library("utility", {.hdrs = {"utility.h"},
+                                   .copts = absl::default_copts,
+                                   .deps = {base_internal, config, type_traits},
+                                   .public = true});
+
+  absl::cc_test("utility_test",
+                {.srcs = {"utility_test.cc"},
+                 .copts = absl::test_copts,
+                 .deps = {utility, core_headers, memory, strings, gmock_main}});
+}

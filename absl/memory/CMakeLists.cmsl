@@ -1,0 +1,20 @@
+import AbseilHelpers;
+import AbseilConfigureCopts;
+
+int main() {
+  auto memory = absl::cc_library("memory", {.hdrs = {"memory.h"},
+                                            .copts = absl::default_copts,
+                                            .deps = {core_headers, meta},
+                                            .public = true});
+
+  absl::cc_test("memory_test", {.srcs = {"memory_test.cc"},
+                                .copts = absl::test_copts,
+                                .deps = {memory, base, core_headers,
+                                         flat_hash_set, gmock_main}});
+
+  absl::cc_test("memory_exception_safety_test",
+                {.srcs = {"memory_exception_safety_test.cc"},
+                 .copts = absl::test_copts + absl::exceptions_flag,
+                 .linkopts = absl::exceptions_flag_linkopts,
+                 .deps = {memory, exception_safety_testing, gmock_main}});
+}
