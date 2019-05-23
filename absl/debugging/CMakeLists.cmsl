@@ -2,14 +2,33 @@ import AbseilHelpers;
 import AbseilConfigureCopts;
 
 int main() {
-  auto stacktrace = absl::cc_library(
-      "stacktrace", {.hdrs = {"stacktrace.h"},
-                     .srcs = {"stacktrace.cc"},
-                     .copts = absl::default_copts,
-                     .deps = {debugging_internal, base, core_headers},
-                     .public = true});
+  auto base = cmake::declare_library("absl::base");
+  auto core_headers = cmake::declare_library("absl::core_headers");
+  auto debugging_internal = cmake::declare_library("absl::debugging_internal");
+  auto symbolize = cmake::declare_library("absl::symbolize");
+  auto demangle_internal = cmake::declare_library("absl::demangle_internal");
+  auto malloc_internal = cmake::declare_library("absl::malloc_internal");
+  auto examine_stack = cmake::declare_library("absl::examine_stack");
+  auto failure_signal_handler =
+      cmake::declare_library("absl::failure_signal_handler");
+  auto leak_check = cmake::declare_library("absl::leak_check");
+  auto leak_check_disable = cmake::declare_library("absl::leak_check_disable");
+  auto leak_check_api_enabled_for_testing =
+      cmake::declare_library("absl::leak_check_api_enabled_for_testing");
+  auto leak_check_api_disabled_for_testing =
+      cmake::declare_library("absl::leak_check_api_disabled_for_testing");
+  auto stack_consumption = cmake::declare_library("absl::stack_consumption");
+  auto debugging = cmake::declare_library("absl::debugging");
+  auto stacktrace = cmake::declare_library("absl::stacktrace");
 
-  auto symbolize = absl::cc_library(
+  absl::cc_library("stacktrace",
+                   {.hdrs = {"stacktrace.h"},
+                    .srcs = {"stacktrace.cc"},
+                    .copts = absl::default_copts,
+                    .deps = {debugging_internal, base, core_headers},
+                    .public = true});
+
+  absl::cc_library(
       "symbolize",
       {.hdrs = {"symbolize.h", "internal/symbolize.h"},
        .srcs = {"symbolize.cc", "symbolize_elf.inc",
@@ -25,13 +44,13 @@ int main() {
                                    .deps = {stack_consumption, symbolize, base,
                                             core_headers, memory, gtest_main}});
 
-  auto examine_stack = absl::cc_library(
-      "examine_stack", {.hdrs = {"internal/examine_stack.h"},
-                        .srcs = {"internal/examine_stack.cc"},
-                        .copts = absl::default_copts,
-                        .deps = {stacktrace, symbolize, base, core_headers}});
+  absl::cc_library("examine_stack",
+                   {.hdrs = {"internal/examine_stack.h"},
+                    .srcs = {"internal/examine_stack.cc"},
+                    .copts = absl::default_copts,
+                    .deps = {stacktrace, symbolize, base, core_headers}});
 
-  auto failure_signal_handler = absl::cc_library(
+  absl::cc_library(
       "failure_signal_handler",
       {.hdrs = {"failure_signal_handler.h"},
        .srcs = {"failure_signal_handler.cc"},
@@ -45,7 +64,7 @@ int main() {
                  .deps = {failure_signal_handler, stacktrace, symbolize, base,
                           strings, Threads::Threads, gmock}});
 
-  auto debugging_internal = absl::cc_library(
+  absl::cc_library(
       "debugging_internal",
       {.hdrs = {"internal/address_is_readable.h", "internal/elf_mem_image.h",
                 "internal/stacktrace_aarch64-inl.inc",
@@ -61,11 +80,10 @@ int main() {
        .copts = absl::default_copts,
        .deps = {base, core_headers, dynamic_annotations}});
 
-  auto demangle_internal =
-      absl::cc_library("demangle_internal", {.hdrs = {"internal/demangle.h"},
-                                             .srcs = {"internal/demangle.cc"},
-                                             .copts = absl::default_copts,
-                                             .deps = {base, core_headers}});
+  absl::cc_library("demangle_internal", {.hdrs = {"internal/demangle.h"},
+                                         .srcs = {"internal/demangle.cc"},
+                                         .copts = absl::default_copts,
+                                         .deps = {base, core_headers}});
 
   absl::cc_test("demangle_test",
                 {.srcs = {"internal/demangle_test.cc"},
@@ -73,36 +91,33 @@ int main() {
                  .deps = {demangle_internal, stack_consumption, base,
                           core_headers, memory, gmock_main}});
 
-  auto leak_check =
-      absl::cc_library("leak_check", {.hdrs = {"leak_check.h"},
-                                      .srcs = {"leak_check.cc"},
-                                      .copts = absl::default_copts,
-                                      .deps = {core_headers},
-                                      .public = true});
+  absl::cc_library("leak_check", {.hdrs = {"leak_check.h"},
+                                  .srcs = {"leak_check.cc"},
+                                  .copts = absl::default_copts,
+                                  .deps = {core_headers},
+                                  .public = true});
 
-  auto leak_check_disable =
-      absl::cc_library("leak_check_disable", {.srcs = {"leak_check_disable.cc"},
-                                              .copts = absl::default_copts,
-                                              .public = true});
+  absl::cc_library("leak_check_disable", {.srcs = {"leak_check_disable.cc"},
+                                          .copts = absl::default_copts,
+                                          .public = true});
 
   {
     auto copts = absl::default_copts;
     if (absl::have_lsan) {
       copts += "-DLEAK_SANITIZER";
     }
-    auto leak_check_api_enabled_for_testing = absl::cc_library(
-        "leak_check_api_enabled_for_testing", {.hdrs = {"leak_check.h"},
-                                               .srcs = {"leak_check.cc"},
-                                               .copts = copts,
-                                               .testonly = true});
+    absl::cc_library("leak_check_api_enabled_for_testing",
+                     {.hdrs = {"leak_check.h"},
+                      .srcs = {"leak_check.cc"},
+                      .copts = copts,
+                      .testonly = true});
   }
 
-  auto leak_check_api_disabled_for_testing =
-      absl::cc_library("leak_check_api_disabled_for_testing",
-                       {.hdrs = {"leak_check.h"},
-                        .srcs = {"leak_check.cc"},
-                        .copts = absl::default_copts + "-ULEAK_SANITIZER",
-                        .testonly = true});
+  absl::cc_library("leak_check_api_disabled_for_testing",
+                   {.hdrs = {"leak_check.h"},
+                    .srcs = {"leak_check.cc"},
+                    .copts = absl::default_copts + "-ULEAK_SANITIZER",
+                    .testonly = true});
 
   {
     auto copts = absl::default_copts;
@@ -128,18 +143,18 @@ int main() {
                  .deps = {leak_check_api_enabled_for_testing,
                           leak_check_disable, base, gmock_main}});
 
-  auto stack_consumption = absl::cc_library(
-      "stack_consumption", {.hdrs = {"internal/stack_consumption.h"},
-                            .srcs = {"internal/stack_consumption.cc"},
-                            .copts = absl::default_copts,
-                            .deps = {base, core_headers}.testonly = true});
+  absl::cc_library("stack_consumption",
+                   {.hdrs = {"internal/stack_consumption.h"},
+                    .srcs = {"internal/stack_consumption.cc"},
+                    .copts = absl::default_copts,
+                    .deps = {base, core_headers}.testonly = true});
 
   absl::cc_test("stack_consumption_test",
                 {.srcs = {"internal/stack_consumption_test.cc"},
                  .copts = absl::test_copts,
                  .deps = {stack_consumption, base, core_headers, gmock_main}});
 
-  auto debugging = absl::cc_library(
-      "debugging", {.copts = absl::default_copts,
+  absl::cc_library("debugging",
+                   {.copts = absl::default_copts,
                     .deps = {stacktrace, leak_check}.public = true});
 }

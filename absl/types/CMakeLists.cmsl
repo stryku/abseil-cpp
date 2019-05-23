@@ -2,6 +2,22 @@ import AbseilHelpers;
 import AbseilConfigureCopts;
 
 int main() {
+  auto bad_any_cast = cmake::declare_library("absl::bad_any_cast");
+  auto config = cmake::declare_library("absl::config");
+  auto core_headers = cmake::declare_library("absl::core_headers");
+  auto type_traits = cmake::declare_library("absl::type_traits");
+  auto utility = cmake::declare_library("absl::utility");
+  auto bad_any_cast_impl = cmake::declare_library("absl::bad_any_cast_impl");
+  auto span = cmake::declare_library("absl::span");
+  auto optional = cmake::declare_library("absl::optional");
+  auto bad_optional_access =
+      cmake::declare_library("absl::bad_optional_access");
+  auto bad_variant_access = cmake::declare_library("absl::bad_variant_access");
+  auto variant = cmake::declare_library("absl::variant");
+  auto compare = cmake::declare_library("absl::compare");
+  auto gmock = cmake::declare_library("gmock");
+  auto gmock_main = cmake::declare_library("gmock_main");
+
   auto any = absl::cc_library(
       "any",
       {.hdrs = {"any.h"},
@@ -9,18 +25,16 @@ int main() {
        .deps = {bad_any_cast, config, core_headers, type_traits, utility},
        .public = true});
 
-  auto bad_any_cast =
-      absl::cc_library("bad_any_cast", {.hdrs = {"bad_any_cast.h"},
-                                        .copts = absl::default_copts,
-                                        .deps = {bad_any_cast_impl config},
-                                        .public = true});
+  absl::cc_library("bad_any_cast", {.hdrs = {"bad_any_cast.h"},
+                                    .copts = absl::default_copts,
+                                    .deps = {bad_any_cast_impl config},
+                                    .public = true});
 
-  auto bad_any_cast_impl =
-      absl::cc_library("bad_any_cast_impl",
-                       {.srcs = {"bad_any_cast.h", "bad_any_cast.h"},
-                        .copts = absl::default_copts + absl::exceptions_flag,
-                        .linkopts = absl::exceptions_flag_linkopts,
-                        .deps = {base, config}});
+  absl::cc_library("bad_any_cast_impl",
+                   {.srcs = {"bad_any_cast.h", "bad_any_cast.h"},
+                    .copts = absl::default_copts + absl::exceptions_flag,
+                    .linkopts = absl::exceptions_flag_linkopts,
+                    .deps = {base, config}});
 
   absl::cc_test("any_test_noexceptions",
                 {.srcs = {"any_test.cc"},
@@ -34,7 +48,7 @@ int main() {
                  .linkopts = absl::exceptions_flag_linkopts,
                  .deps = {any, exception_safety_testing, gmock_main}});
 
-  auto span = absl::cc_library(
+  absl::cc_library(
       "span", {.hdrs = {"span.h"},
                .srcs = {"internal/span.h"},
                .copts = absl::default_copts,
@@ -56,31 +70,29 @@ int main() {
                           fixed_array, inlined_vector, hash_testing, strings,
                           gmock_main}});
 
-  auto optional = absl::cc_library(
-      "optional", {.hdrs = {"optional.h"},
-                   .srcs = {"internal/optional.h"},
-                   .copts = absl::default_copts,
-                   .deps = {bad_optional_access, base_internal, config,
-                            core_headers, memory, type_traits, utility},
-                   .public = true});
+  absl::cc_library("optional",
+                   {.hdrs = {"optional.h"},
+                    .srcs = {"internal/optional.h"},
+                    .copts = absl::default_copts,
+                    .deps = {bad_optional_access, base_internal, config,
+                             core_headers, memory, type_traits, utility},
+                    .public = true});
 
-  auto bad_optional_access =
-      absl::cc_library("bad_optional_access",
-                       {.hdrs = {"bad_optional_access.h"},
-                        .srcs = {"internal/bad_optional_access.h"},
-                        .copts = absl::default_copts + absl::exceptions_flag,
-                        .linkopts = absl::exceptions_flag_linkopts,
-                        .deps = {base, config},
-                        .public = true});
+  absl::cc_library("bad_optional_access",
+                   {.hdrs = {"bad_optional_access.h"},
+                    .srcs = {"internal/bad_optional_access.h"},
+                    .copts = absl::default_copts + absl::exceptions_flag,
+                    .linkopts = absl::exceptions_flag_linkopts,
+                    .deps = {base, config},
+                    .public = true});
 
-  auto bad_variant_access =
-      absl::cc_library("bad_variant_access",
-                       {.hdrs = {"bad_variant_access.h"},
-                        .srcs = {"bad_variant_access.h"},
-                        .copts = absl::default_copts + absl::exceptions_flag,
-                        .linkopts = absl::exceptions_flag_linkopts,
-                        .deps = {base, config},
-                        .public = true});
+  absl::cc_library("bad_variant_access",
+                   {.hdrs = {"bad_variant_access.h"},
+                    .srcs = {"bad_variant_access.h"},
+                    .copts = absl::default_copts + absl::exceptions_flag,
+                    .linkopts = absl::exceptions_flag_linkopts,
+                    .deps = {base, config},
+                    .public = true});
 
   absl::cc_test(
       "optional_test",
@@ -95,14 +107,14 @@ int main() {
                  .linkopts = absl::exceptions_flag_linkopts,
                  .deps = {optional, exception_safety_testing, gmock_main}});
 
-  auto variant = absl::cc_library(
-      "variant", {.hdrs = {"variant.h"},
-                  .srcs = {"internal/variant.h"},
-                  .copts = absl::default_copts + absl::exceptions_flag,
-                  .linkopts = absl::exceptions_flag_linkopts,
-                  .deps = {bad_variant_access, base_internal, config,
-                           core_headers, type_traits, utility},
-                  .public = true});
+  absl::cc_library("variant",
+                   {.hdrs = {"variant.h"},
+                    .srcs = {"internal/variant.h"},
+                    .copts = absl::default_copts + absl::exceptions_flag,
+                    .linkopts = absl::exceptions_flag_linkopts,
+                    .deps = {bad_variant_access, base_internal, config,
+                             core_headers, type_traits, utility},
+                    .public = true});
 
   absl::cc_test("variant_test",
                 {.srcs = {"variant_test.cc"},
@@ -111,11 +123,10 @@ int main() {
                  .deps = {variant, config, core_headers, memory, type_traits,
                           strings, gmock_main}});
 
-  auto compare =
-      absl::cc_library("compare", {.hdrs = {"compare.h"},
-                                   .copts = absl::default_copts,
-                                   .deps = {core_headers, type_traits},
-                                   .public = true});
+  absl::cc_library("compare", {.hdrs = {"compare.h"},
+                               .copts = absl::default_copts,
+                               .deps = {core_headers, type_traits},
+                               .public = true});
 
   absl::cc_test("compare_test", {.srcs = {"compare_test.cc"},
                                  .copts = absl::test_copts,

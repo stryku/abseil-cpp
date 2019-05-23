@@ -2,6 +2,14 @@ import AbseilHelpers;
 import AbseilConfigureCopts;
 
 int main() {
+  auto core_headers = cmake::declare_library("absl::core_headers");
+  auto meta = cmake::declare_library("absl::meta");
+  auto base = cmake::declare_library("absl::base");
+  auto flat_hash_set = cmake::declare_library("absl::flat_hash_set");
+  auto exception_safety_testing =
+      cmake::declare_library("absl::exception_safety_testing");
+  auto gmock_main = cmake::declare_library("gmock_main");
+
   auto memory = absl::cc_library("memory", {.hdrs = {"memory.h"},
                                             .copts = absl::default_copts,
                                             .deps = {core_headers, meta},

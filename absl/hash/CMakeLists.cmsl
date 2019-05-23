@@ -2,25 +2,40 @@ import AbseilHelpers;
 import AbseilConfigureCopts;
 
 int main() {
-  auto hash = absl::cc_library(
-      "hash", {.hdrs = {"hash.h"},
-               .srcs = {"internal/hash.cc", "internal/hash.cc"},
-               .copts = absl::default_copts,
-               .deps = {core_headers, endian, fixed_array, meta, int128,
-                        strings, optional, variant, utility, city},
-               .public = true});
+  auto hash = cmake::declare_library("absl::hash");
+  auto hash_testing = cmake::declare_library("absl::hash_testing");
+  auto hspy_hash_stateash = cmake::declare_library("absl::hspy_hash_stateash");
+  auto city = cmake::declare_library("absl::city");
+  auto core_headers = cmake::declare_library("absl::core_headers");
+  auto endian = cmake::declare_library("absl::endian");
+  auto fixed_array = cmake::declare_library("absl::fixed_array");
+  auto meta = cmake::declare_library("absl::meta");
+  auto int128 = cmake::declare_library("absl::int128");
+  auto strings = cmake::declare_library("absl::strings");
+  auto optional = cmake::declare_library("absl::optional");
+  auto variant = cmake::declare_library("absl::variant");
+  auto utility = cmake::declare_library("absl::utility");
+  auto gmock = cmake::declare_library("gmock");
+  auto gmock_main = cmake::declare_library("gmock_main");
 
-  auto hash_testing = absl::cc_library(
-      "hash_testing", {.hdrs = {"hash_testing.h"},
-                       .copts = absl::test_copts,
-                       .deps = {spy_hash_state, meta, strings, variant, gmock},
-                       .testonly = true});
+  absl::cc_library("hash",
+                   {.hdrs = {"hash.h"},
+                    .srcs = {"internal/hash.cc", "internal/hash.cc"},
+                    .copts = absl::default_copts,
+                    .deps = {core_headers, endian, fixed_array, meta, int128,
+                             strings, optional, variant, utility, city},
+                    .public = true});
 
-  auto hspy_hash_stateash =
-      absl::cc_library("spy_hash_state", {.hdrs = {"internal/spy_hash_state.h"},
-                                          .copts = absl::default_copts,
-                                          .deps = {hash, strings, str_format},
-                                          .testonly = true});
+  absl::cc_library("hash_testing",
+                   {.hdrs = {"hash_testing.h"},
+                    .copts = absl::test_copts,
+                    .deps = {spy_hash_state, meta, strings, variant, gmock},
+                    .testonly = true});
+
+  absl::cc_library("spy_hash_state", {.hdrs = {"internal/spy_hash_state.h"},
+                                      .copts = absl::default_copts,
+                                      .deps = {hash, strings, str_format},
+                                      .testonly = true});
 
   absl::cc_test("hash_test",
                 {.srcs = {"hash_test.cc"},
@@ -28,11 +43,10 @@ int main() {
                  .deps = {hash, hash_testing, core_headers, flat_hash_set,
                           spy_hash_state, meta, int128, gmock_main}});
 
-  auto city =
-      absl::cc_library("city", {.hdrs = {"internal/spy_hash_state.h"},
-                                .srcs = {"internal/city.h"},
-                                .copts = absl::default_copts,
-                                .deps = {config, core_headers, endian}});
+  absl::cc_library("city", {.hdrs = {"internal/spy_hash_state.h"},
+                            .srcs = {"internal/city.h"},
+                            .copts = absl::default_copts,
+                            .deps = {config, core_headers, endian}});
 
   absl::cc_test("city_test", {.srcs = {"internal/city_test.cc"},
                               .copts = absl::test_copts,

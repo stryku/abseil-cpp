@@ -2,6 +2,21 @@ import AbseilHelpers;
 import AbseilConfigureCopts;
 
 int main() {
+  auto strings_internal = cmake::declare_library("absl::strings_internal");
+  auto base = cmake::declare_library("absl::base");
+  auto bits = cmake::declare_library("absl::bits");
+  auto config = cmake::declare_library("absl::config");
+  auto core_headers = cmake::declare_library("absl::core_headers");
+  auto endian = cmake::declare_library("absl::endian");
+  auto throw_delegate = cmake::declare_library("absl::throw_delegate");
+  auto memory = cmake::declare_library("absl::memory");
+  auto type_traits = cmake::declare_library("absl::type_traits");
+  auto int128 = cmake::declare_library("absl::int128");
+  auto str_format = cmake::declare_library("absl::str_format");
+  auto str_format_internal =
+      cmake::declare_library("absl::str_format_internal");
+  auto gmock_main = cmake::declare_library("gmock_main");
+
   auto strings = absl::cc_library(
       "strings",
       {.hdrs = {"ascii.h", "charconv.h", "escaping.h", "match.h", "numbers.h",
@@ -20,7 +35,7 @@ int main() {
                 throw_delegate, memory, type_traits, int128},
        .public = true});
 
-  auto strings_internal = absl::cc_library(
+  absl::cc_library(
       "strings_internal",
       {.hdrs = {"internal/char_map.h", "internal/ostringstream.h",
                 "internal/resize_uninitialized.h", "internal/utf8.h"},
@@ -117,11 +132,10 @@ int main() {
                  .copts = absl::test_copts,
                  .deps = {strings, base, gmock_main}});
 
-  auto str_format =
-      absl::cc_library("str_format", {.hdrs = {"str_format.h"},
-                                      .copts = absl::default_copts,
-                                      .deps = {str_format_internal},
-                                      .public = true});
+  absl::cc_library("str_format", {.hdrs = {"str_format.h"},
+                                  .copts = absl::default_copts,
+                                  .deps = {str_format_internal},
+                                  .public = true});
 
   auto str_format_internal = absl::cc_library(
       "str_format_internal",
@@ -179,7 +193,7 @@ int main() {
                  .copts = absl::test_copts,
                  .deps = {str_format_internal, core_headers, gmock_main}});
 
-  auto str_format_internal =
+  auto pow10_helper =
       absl::cc_library("pow10_helper", {.hdrs = {"internal/pow10_helper.h"},
                                         .srcs = {"internal/pow10_helper.cc"},
                                         .copts = absl::default_copts,

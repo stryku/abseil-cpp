@@ -12,8 +12,8 @@ export class cc_library_params {
   bool testonly;
 };
 
-auto add_library(project absl_project, string name, cc_library_params params) {
-  auto lib = absl_project.add_static_library(name);
+auto add_library(string name, cc_library_params params) {
+  auto lib = cmake::get_current_project().add_static_library(name);
   lib.add_sources_private(params.hdrs);
   lib.add_sources_private(params.srcs);
 
@@ -43,9 +43,8 @@ auto add_library(project absl_project, string name, cc_library_params params) {
   return lib;
 }
 
-auto add_interface_library(project absl_project, string name,
-                           cc_library_params params) {
-  auto lib = absl_project.add_interface_library(name);
+auto add_interface_library(string name, cc_library_params params) {
+  auto lib = cmake::get_current_project().add_interface_library(name);
   lib.include_directories_interface(cmake::interface::build,
                                     common_include_dirs);
   lib.include_directories_interface(cmake::interface::install,
@@ -61,7 +60,7 @@ auto add_interface_library(project absl_project, string name,
 }
 
 export {
-  auto cc_library(project absl_project, string name, cc_library_params params) {
+  auto cc_library(string name, cc_library_params params) {
     if (params.testonly.equals_to(true) && !absl::run_tests) {
       return;
     }
@@ -74,8 +73,8 @@ export {
     params.srcs.remove_matching("*.inc");
 
     auto is_interface = params.srcs.empty();
-    auto lib = is_interface ? add_interface_library(absl_project, name, params)
-                            : add_library(absl_project, name, params);
+    auto lib = is_interface ? add_interface_library(name, params)
+                            : add_library(name, params);
 
     if (!params.testonly && absl::enable_install) {
       cmake::install_targets(
@@ -84,7 +83,7 @@ export {
                 .archive = {.destination = absl::install_libdir}});
     }
 
-    absl_project.add_alias_library(lib, "absl::" + lib.name());
+    cmake::get_current_project().add_alias_library(lib, "absl::" + lib.name());
   }
 
   class cc_test_params {
@@ -95,11 +94,12 @@ export {
     list<string> linkopts;
   };
 
-  auto cc_test(project absl_project, string name, cc_test_params params) {
+  auto cc_test(string name, cc_test_params params) {
     if (!absl::run_tests) {
       return;
     }
 
+    auto absl_project = cmake::get_current_project();
     auto exec = absl_project.add_executable(name);
     exec.add_sources_private(params.srcs);
 

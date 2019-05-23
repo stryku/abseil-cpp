@@ -2,21 +2,30 @@ import AbseilHelpers;
 import AbseilConfigureCopts;
 
 int main() {
-  auto time = absl::cc_library(
-      "time", {.hdrs = {"civil_time.h", "clock.h", "time.h"},
-               .srcs = {"civil_time.cc", "clock.cc", "duration.cc", "format.cc",
-                        "internal/get_current_time_chrono.inc",
-                        "internal/get_current_time_posix.inc", "time.cc"},
-               .copts = absl::default_copts,
-               .deps = {base, base, core_headers, int128, strings, civil_time,
-                        time_zone},
-               .public = true});
+  auto base = cmake::declare_library("absl::base");
+  auto core_headers = cmake::declare_library("absl::core_headers");
+  auto int128 = cmake::declare_library("absl::int128");
+  auto strings = cmake::declare_library("absl::strings");
+  auto civil_time = cmake::declare_library("absl::civil_time");
+  auto time_zone = cmake::declare_library("absl::time_zone");
+  auto gmock = cmake::declare_library("gmock");
+  auto gmock_main = cmake::declare_library("gmock_main");
 
-  auto civil_time = absl::cc_library(
-      "civil_time", {.hdrs = {"internal/cctz/include/cctz/civil_time.h",
-                              "internal/cctz/include/cctz/civil_time_detail.h"},
-                     .srcs = {"internal/cctz/src/civil_time_detail.cc"},
-                     .copts = absl::default_copts});
+  absl::cc_library(
+      "time",
+      {.hdrs = {"civil_time.h", "clock.h", "time.h"},
+       .srcs = {"civil_time.cc", "clock.cc", "duration.cc", "format.cc",
+                "internal/get_current_time_chrono.inc",
+                "internal/get_current_time_posix.inc", "time.cc"},
+       .copts = absl::default_copts,
+       .deps = {base, core_headers, int128, strings, civil_time, time_zone},
+       .public = true});
+
+  absl::cc_library("civil_time",
+                   {.hdrs = {"internal/cctz/include/cctz/civil_time.h",
+                             "internal/cctz/include/cctz/civil_time_detail.h"},
+                    .srcs = {"internal/cctz/src/civil_time_detail.cc"},
+                    .copts = absl::default_copts});
 
   list<library> time_zone_deps;
   if (cmake::get_platform_id() == cmake::platform_id::darwin) {
@@ -24,8 +33,8 @@ int main() {
     time_zone_deps += core_foundation.libraries();
   }
 
-  auto time_zone = absl::cc_library(
-      "time_zone", {.hdrs = {"internal/cctz/include/cctz/time_zone.h",
+  absl::cc_library("time_zone",
+                   {.hdrs = {"internal/cctz/include/cctz/time_zone.h",
                              "internal/cctz/include/cctz/zone_info_source.h"},
                     .srcs = {"internal/cctz/src/time_zone_fixed.cc",
                              "internal/cctz/src/time_zone_fixed.h",

@@ -2,6 +2,13 @@ import AbseilHelpers;
 import AbseilConfigureCopts;
 
 int main() {
+  auto core_headers = cmake::declare_library("absl::core_headers");
+  auto config = cmake::declare_library("absl::config");
+  auto base = cmake::declare_library("absl::base");
+  auto hash_testing = cmake::declare_library("absl::hash_testing");
+  auto type_traits = cmake::declare_library("absl::type_traits");
+  auto gmock_main = cmake::declare_library("gmock_main");
+
   auto int128 = absl::cc_library(
       "int128", {.hdrs = {"int128.h"},
                  .srcs = {"int128.cc", "int128_have_intrinsic.inc",

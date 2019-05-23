@@ -2,10 +2,16 @@ import AbseilHelpers;
 import AbseilConfigureCopts;
 
 int main() {
-  auto memory = absl::cc_library("type_traits", {.hdrs = {"type_traits.h"},
-                                                 .copts = absl::default_copts,
-                                                 .deps = {config},
-                                                 .public = true});
+  auto config = cmake::declare_library("absl::config");
+  auto exception_safety_testing =
+      cmake::declare_library("absl::exception_safety_testing");
+  auto gmock_main = cmake::declare_library("gmock_main");
+
+  auto type_traits =
+      absl::cc_library("type_traits", {.hdrs = {"type_traits.h"},
+                                       .copts = absl::default_copts,
+                                       .deps = {config},
+                                       .public = true});
 
   absl::cc_test("type_traits_test", {.srcs = {"type_traits_test.cc"},
                                      .copts = absl::test_copts,
@@ -17,7 +23,7 @@ int main() {
                  .linkopts = absl::exceptions_flag_linkopts,
                  .deps = {memory, exception_safety_testing, gmock_main}});
 
-  auto memory = absl::cc_library(
+  auto meta = absl::cc_library(
       "meta",
       {.copts = absl::default_copts, .deps = {type_traits}, .public = true});
 }

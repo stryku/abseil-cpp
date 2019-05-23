@@ -2,6 +2,22 @@ import AbseilHelpers;
 import AbseilConfigureCopts;
 
 int main() {
+  auto base = cmake::declare_library("absl::base_internal");
+  auto core_headers = cmake::declare_library("absl::core_headers");
+  auto base_internal = cmake::declare_library("absl::base_internal");
+  auto malloc_internal = cmake::declare_library("absl::malloc_internal");
+  auto config = cmake::declare_library("absl::config");
+  auto dynamic_annotations =
+      cmake::declare_library("absl::dynamic_annotations");
+  auto stacktrace = cmake::declare_library("absl::stacktrace");
+  auto symbolize = cmake::declare_library("absl::symbolize");
+  auto time = cmake::declare_library("absl::time");
+  auto threads = cmake::declare_library("Threads::Threads");
+  auto gmock_main = cmake::declare_library("gmock_main");
+  auto thread_pool = cmake::declare_library("absl::thread_pool");
+  auto per_thread_sem_test_common =
+      cmake::declare_library("absl::per_thread_sem_test_common");
+
   auto graphcycles_internal = absl::cc_library(
       "graphcycles_internal",
       {.hdrs = {"internal/graphcycles.h"},
@@ -35,11 +51,10 @@ int main() {
                                      .deps = {graphcycles_internal, base,
                                               core_headers, gmock_main}});
 
-  auto thread_pool =
-      absl::cc_library("thread_pool", {.hdrs = {"internal/thread_pool.h"},
-                                       .copts = absl::default_copts,
-                                       .deps = {synchronization, core_headers},
-                                       .testonly = true});
+  absl::cc_library("thread_pool", {.hdrs = {"internal/thread_pool.h"},
+                                   .copts = absl::default_copts,
+                                   .deps = {synchronization, core_headers},
+                                   .testonly = true});
 
   absl::cc_test("mutex_test",
                 {.srcs = {"mutex_test.cc"},
@@ -52,12 +67,11 @@ int main() {
                  .copts = absl::test_copts,
                  .deps = {synchronization, time, gmock_main}});
 
-  auto per_thread_sem_test_common =
-      absl::cc_library("per_thread_sem_test_common",
-                       {.hdrs = {"internal/per_thread_sem_test.h"},
-                        .copts = absl::default_copts,
-                        .deps = {synchronization, base, strings, time, gmock},
-                        .testonly = true});
+  absl::cc_library("per_thread_sem_test_common",
+                   {.hdrs = {"internal/per_thread_sem_test.h"},
+                    .copts = absl::default_copts,
+                    .deps = {synchronization, base, strings, time, gmock},
+                    .testonly = true});
 
   absl::cc_test("per_thread_sem_test",
                 {.srcs = {"internal/per_thread_sem_test.cc"},

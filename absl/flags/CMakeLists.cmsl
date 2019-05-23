@@ -2,65 +2,79 @@ import AbseilHelpers;
 import AbseilConfigureCopts;
 
 int main() {
-  auto flags_internal = absl::cc_library(
-      "flags_internal",
-      {.hdrs = {"internal/path_util.h", "internal/program_name.h"},
-       .srcs = {"internal/program_name.cc"},
-       .copts = absl::default_copts,
-       .linkopts = absl::default_linkopts,
-       .deps = {strings, synchronization},
-       .public = true});
+  auto flags_internal = cmake::declare_library("absl::flags_internal");
+  auto flags_config = cmake::declare_library("absl::flags_config");
+  auto flags_marshalling = cmake::declare_library("absl::flags_marshalling");
+  auto flags_handle = cmake::declare_library("absl::flags_handle");
+  auto flags_registry = cmake::declare_library("absl::flags_registry");
+  auto flags = cmake::declare_library("absl::flags");
+  auto flags_usage = cmake::declare_library("absl::flags_usage");
+  auto flags_parse = cmake::declare_library("absl::flags_parse");
+  auto strings = cmake::declare_library("absl::strings");
+  auto core_headers = cmake::declare_library("absl::core_headers");
+  auto str_format = cmake::declare_library("absl::str_format");
+  auto synchronization = cmake::declare_library("absl::synchronization");
+  auto base = cmake::declare_library("absl::base");
+  auto optional = cmake::declare_library("absl::optional");
+  auto dynamic_annotations =
+      cmake::declare_library("absl::dynamic_annotations");
+  auto gmock_main = cmake::declare_library("gmock_main");
 
-  auto flags_config = absl::cc_library(
-      "flags_config",
-      {.hdrs = {"config.h", "usage_config.h"},
-       .srcs = {"usage_config.cc"},
-       .copts = absl::default_copts,
-       .linkopts = absl::default_linkopts,
-       .deps = {flags_internal, core_headers, strings, synchronization}});
+  absl::cc_library("flags_internal",
+                   {.hdrs = {"internal/path_util.h", "internal/program_name.h"},
+                    .srcs = {"internal/program_name.cc"},
+                    .copts = absl::default_copts,
+                    .linkopts = absl::default_linkopts,
+                    .deps = {strings, synchronization},
+                    .public = true});
 
-  auto flags_marshalling = absl::cc_library(
-      "flags_marshalling", {.hdrs = {"marshalling.h"},
-                            .srcs = {"marshalling.cc"},
-                            .copts = absl::default_copts,
-                            .linkopts = absl::default_linkopts,
-                            .deps = {core_headers, strings, str_format}});
+  absl::cc_library("flags_config", {.hdrs = {"config.h", "usage_config.h"},
+                                    .srcs = {"usage_config.cc"},
+                                    .copts = absl::default_copts,
+                                    .linkopts = absl::default_linkopts,
+                                    .deps = {flags_internal, core_headers,
+                                             strings, synchronization}});
 
-  auto flags_handle = absl::cc_library(
-      "flags_handle",
-      {.hdrs = {"internal/commandlineflag.h"},
-       .srcs = {"internal/commandlineflag.cc"},
-       .copts = absl::default_copts,
-       .linkopts = absl::default_linkopts,
-       .deps = {flags_config, flags_marshalling, base, core_headers, strings,
-                synchronization, optional}});
+  absl::cc_library("flags_marshalling",
+                   {.hdrs = {"marshalling.h"},
+                    .srcs = {"marshalling.cc"},
+                    .copts = absl::default_copts,
+                    .linkopts = absl::default_linkopts,
+                    .deps = {core_headers, strings, str_format}});
 
-  auto flags_registry = absl::cc_library(
-      "flags_registry",
-      {.hdrs = {"internal/registry.h", "internal/type_erased.h"},
-       .srcs = {"internal/registry.cc", "internal/type_erased.cc"},
-       .copts = absl::default_copts,
-       .linkopts = absl::default_linkopts,
-       .deps = {flags_config, flags_handle, base, core_headers,
-                dynamic_annotations, strings, synchronization}});
+  absl::cc_library("flags_handle", {.hdrs = {"internal/commandlineflag.h"},
+                                    .srcs = {"internal/commandlineflag.cc"},
+                                    .copts = absl::default_copts,
+                                    .linkopts = absl::default_linkopts,
+                                    .deps = {flags_config, flags_marshalling,
+                                             base, core_headers, strings,
+                                             synchronization, optional}});
 
-  auto flags = absl::cc_library(
-      "flags", {.hdrs = {"declare.h", "flag.h", "internal/flag.h"},
-                .srcs = {"flag.cc"},
-                .copts = absl::default_copts,
-                .linkopts = absl::default_linkopts,
-                .deps = {flags_config, flags_handle, flags_marshalling,
-                         flags_registry, base, core_headers, strings}});
+  absl::cc_library("flags_registry",
+                   {.hdrs = {"internal/registry.h", "internal/type_erased.h"},
+                    .srcs = {"internal/registry.cc", "internal/type_erased.cc"},
+                    .copts = absl::default_copts,
+                    .linkopts = absl::default_linkopts,
+                    .deps = {flags_config, flags_handle, base, core_headers,
+                             dynamic_annotations, strings, synchronization}});
 
-  auto flags_usage = absl::cc_library(
-      "flags_usage", {.hdrs = {"internal/usage.h"},
-                      .srcs = {"internal/usage.cc"},
-                      .copts = absl::default_copts,
-                      .linkopts = absl::default_linkopts,
-                      .deps = {flags_config, flags, flags_handle,
-                               flags_internal, strings, synchronization}});
+  absl::cc_library("flags",
+                   {.hdrs = {"declare.h", "flag.h", "internal/flag.h"},
+                    .srcs = {"flag.cc"},
+                    .copts = absl::default_copts,
+                    .linkopts = absl::default_linkopts,
+                    .deps = {flags_config, flags_handle, flags_marshalling,
+                             flags_registry, base, core_headers, strings}});
 
-  auto flags_parse = absl::cc_library(
+  absl::cc_library("flags_usage",
+                   {.hdrs = {"internal/usage.h"},
+                    .srcs = {"internal/usage.cc"},
+                    .copts = absl::default_copts,
+                    .linkopts = absl::default_linkopts,
+                    .deps = {flags_config, flags, flags_handle, flags_internal,
+                             strings, synchronization}});
+
+  absl::cc_library(
       "flags_parse",
       {.hdrs = {"internal/parse.h", "parse.h"},
        .srcs = {"parse.cc"},
