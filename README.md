@@ -1,5 +1,7 @@
 # This is a repository for testing complex CMakeSL scripts. DO NOT use this repo if you want to use Abseil libraries.
 
+CMakeSL scripts have been formatted by clang-format, using the root .clang-format file, so they can look odd compared to the original CMakeLists.
+
 ---
 
 # Abseil - C++ Common Libraries
