@@ -43,14 +43,6 @@ int main() {
       cmake::declare_library("absl::unordered_set_members_test");
   auto unordered_set_modifiers_test =
       cmake::declare_library("absl::unordered_set_modifiers_test");
-  auto inlined_vaaaaaaaaaaaaaaaaaaaaaaector = cmake::declare_library(
-      "absl::inlined_veaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaactor");
-  auto inlined_vaaaaaaaaaaaaaaaaaaaaaaector = cmake::declare_library(
-      "absl::inlined_veaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaactor");
-  auto inlined_vaaaaaaaaaaaaaaaaaaaaaaector = cmake::declare_library(
-      "absl::inlined_veaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaactor");
-  auto inlined_vaaaaaaaaaaaaaaaaaaaaaaector = cmake::declare_library(
-      "absl::inlined_veaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaactor");
   auto inlined_vector = cmake::declare_library("absl::inlined_vector");
   auto inlined_vector_internal =
       cmake::declare_library("absl::inlined_vector_internal");
