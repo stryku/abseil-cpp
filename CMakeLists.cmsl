@@ -1,8 +1,8 @@
-import AbseilInstallDirs;
-import AbseilHelpers;
+import "CMake/AbseilInstallDirs";
+import "CMake/AbseilHelpers";
 
 // DownloadGTest.cmsl is not implemented yet.
-import DownloadGTest;
+import "CMake/DownloadGTest";
 
 auto prepare_testing(bool use_googletest_head) {
   if (use_googletest_head) {
@@ -18,17 +18,17 @@ auto prepare_testing(bool use_googletest_head) {
   absl::test_common_libraries += {gtest_main, gtest, gmock, threads.libs_init};
 }
 
-auto prepare_installation(project absl_project) {
+auto prepare_installation(cmake::project absl_project) {
   auto system_install_dirs = {"/usr/local/", "/usr", "/opt/", "/opt/local",
-                              "c:/Program Files/" + absl_project.name()};
+                              "c:/Program Files" / absl_project.name()};
 
   // absl:lts-remove-begin(system installation is supported for LTS releases)
-  if (!isset(cmake::install_prefix) ||
+  if (cmake::install_prefix.empty() ||
       system_install_dirs.contains(cmake::install_prefix)) {
     cmake::warning(
-        "The default and system-level install directories are unsupported except in LTS \
-                releases of Abseil.  Please set CMAKE_INSTALL_PREFIX to install Abseil in your \
-                source or build tree directly.");
+        "The default and system-level install directories are unsupported except in LTS "
+        "releases of Abseil.  Please set CMAKE_INSTALL_PREFIX to install Abseil in your "
+        "source or build tree directly.");
   }
   // absl:lts-remove-end
 
@@ -42,7 +42,8 @@ auto prepare_installation(project absl_project) {
 
   cmake::install_files(config_file_path, absl::install_configdir);
 
-  if (isset(absl_VERSION)) {
+  auto absl_version = extern<string>("absl_VERSION");
+  if (absl_version.has_value()) {
     auto config_version_file_path =
         absl_project.binary_dir() / absl.name() + "ConfigVersion.cmake";
     cmake::write_basic_package_version_file(
@@ -55,25 +56,24 @@ auto prepare_installation(project absl_project) {
 }
 
 int main() {
+  cmake::minimum_required(cmake::version(3.14));
+
   project absl_project("absl");
 
   bool enable_install = cmake::is_top_level_script();
   bool using_clang =
       (cmake::get_cxx_compiler_info().id == cmake::cxx_compiler_id::clang);
 
-  cmake::module_path += {cmake::current_list_dir + "/CMake",
-                         cmake::current_list_dir + "/absl/copts"};
+  cmake::module_path += {cmake::current_source_dir() / "CMake",
+                         cmake::current_source_dir() / "absl/copts"};
 
-  absl::common_include_dirs += cmake::current_list_dir;
+  absl::common_include_dirs += cmake::current_source_dir();
 
-  option run_tests("If ON, Abseil tests will be run.", false);
-  option use_googletest_head(
-      "If ON, abseil will download HEAD from googletest at config time.",
-      false);
+  auto run_tests = option("ABSL_RUN_TESTS", "If ON, Abseil tests will be run.", false)
+  auto use_googletest_head = option("ABSL_USE_GOOGLETEST_HEAD", "If ON, Abseil tests will be run.", false)
 
   if (run_tests) {
-    cmake::setup_ctest();
-    cmake::enable_testing();
+    cmake::enable_ctest();
   }
 
   if (cmake::ctest::build_testing) {
