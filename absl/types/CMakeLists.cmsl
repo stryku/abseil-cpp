@@ -1,5 +1,5 @@
-import AbseilHelpers;
-import AbseilConfigureCopts;
+import "CMake/AbseilHelpers";
+import "CMake/AbseilConfigureCopts";
 
 int main() {
   auto bad_any_cast = cmake::declare_library("absl::bad_any_cast");

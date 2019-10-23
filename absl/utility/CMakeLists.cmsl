@@ -1,6 +1,5 @@
-import AbseilHelpers;
-import AbseilConfigureCopts;
-
+import "CMake/AbseilHelpers";
+import "CMake/AbseilConfigureCopts";
 int main() {
   auto utility =
       absl::cc_library("utility", {.hdrs = {"utility.h"},

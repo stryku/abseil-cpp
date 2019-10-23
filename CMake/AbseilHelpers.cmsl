@@ -14,19 +14,20 @@ export class cc_library_params {
 
 auto add_library(string name, cc_library_params params) {
   auto lib = cmake::get_current_project().add_static_library(name);
-  lib.add_sources_private(params.hdrs);
-  lib.add_sources_private(params.srcs);
+  auto private = cmake::visibility::private;
+  auto public = cmake::visibility::public;
 
-  lib.include_directories_public(cmake::interface::build, common_include_dirs);
-  lib.include_directories_public(cmake::interface::install, install_includedir);
+  lib.add_sources(params.hdrs + params.srcs, private);
 
-  lib.compile_options_private(params.copts);
-  lib.compile_options_public(params.defines);
+  lib.include_directories(cmake::interface::build, common_include_dirs, public);
+  lib.include_directories(cmake::interface::install, install_includedir, public);
 
-  lib.link_to_public(params.deps);
+  lib.compile_options(params.copts, private);
+  lib.compile_options(params.defines, public);
 
-  lib.linker_options_private(params.linkopts);
-  lib.linker_options_private(default_linkopts);
+  lib.link_to(params.deps, public);
+
+  lib.linker_options(params.linkopts + default_linkopts, private);
 
   auto folder = ide_folder;
   if (params.testonly) {
@@ -38,30 +39,34 @@ auto add_library(string name, cc_library_params params) {
 
   lib.set_required_cxx_standard(absl::cxx_standard);
 
-  lib.ser_output_name("absl_" + lib.name());
+  lib.set_output_name("absl_" + lib.name());
 
   return lib;
 }
 
 auto add_interface_library(string name, cc_library_params params) {
   auto lib = cmake::get_current_project().add_interface_library(name);
-  lib.include_directories_interface(cmake::interface::build,
-                                    common_include_dirs);
-  lib.include_directories_interface(cmake::interface::install,
-                                    install_includedir);
 
-  lib.link_to_interface(params.deps);
+  auto interface = cmake::visibility::interface;
+  auto private = cmake::visibility::private;
+  auto public = cmake::visibility::public;
 
-  lib.linker_options_private(params.linkopts);
-  lib.linker_options_private(default_linkopts);
-  lib.compile_definitions_public(params.defines);
+  lib.include_directories(cmake::interface::build,
+                                    common_include_dirs, interface);
+  lib.include_directories(cmake::interface::install,
+                                    install_includedir, interface);
+
+  lib.link_to_interface(params.deps, interface);
+
+  lib.linker_options_private(params.linkopts + default_linkopts, private);
+  lib.compile_definitions(params.defines, public);
 
   return lib;
 }
 
 export {
   auto cc_library(string name, cc_library_params params) {
-    if (params.testonly.equals_to(true) && !absl::run_tests) {
+    if (params.testonly && !absl::run_tests) {
       return;
     }
 
@@ -99,24 +104,27 @@ export {
       return;
     }
 
+    auto private = cmake::visibility::private;
+    auto public = cmake::visibility::public;
+
     auto absl_project = cmake::get_current_project();
     auto exec = absl_project.add_executable(name);
-    exec.add_sources_private(params.srcs);
+    exec.add_sources(params.srcs, private);
 
-    exec.include_directories_public(absl::common_include_dirs);
-    exec.include_directories_private(gmock::include_dirs + gtest::include_dirs);
+    exec.include_directories(absl::common_include_dirs, public);
+    exec.include_directories(gmock::include_dirs + gtest::include_dirs, private);
 
-    exec.compile_definitions_public(params.defines);
-    exec.compile_options_private(params.copts);
+    exec.compile_definitions(params.defines, public);
+    exec.compile_options(params.copts, private);
 
-    exec.link_to_public(params.deps);
-    exec.linker_options_private(params.linkopts);
+    exec.link_to(params.deps, public);
+    exec.linker_options(params.linkopts, private);
 
     exec.set_folder(ide_folder / "test");
 
     exec.set_required_cxx_standard(absl::cxx_standard);
 
-    cmake::add_test(exec.name(), exec.name());
+    cmake::add_test(exec);
   }
 
   auto check_target(string name) {

@@ -1,5 +1,5 @@
-import AbseilHelpers;
-import AbseilConfigureCopts;
+import "CMake/AbseilHelpers";
+import "CMake/AbseilConfigureCopts";
 
 int main() {
   auto base = cmake::declare_library("absl::base_internal");
