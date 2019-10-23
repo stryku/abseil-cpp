@@ -1,4 +1,4 @@
-import GENERATED_AbseilCopts;
+import "copts/GENERATED_AbseilCopts";
 
 export {
   namespace absl {
@@ -21,7 +21,7 @@ export {
     } else if ({cmake::cxx_compiler_id::clang,
                 cmake::cxx_compiler_id::apple_clang}
                    .contains(compiler_info.id)) {
-      if (cmake::msvc) {
+      if (cmake::get_system_info().id == cmake::system_id::windows) {
         default_copts = clang_cl_flags;
         test_copts = clang_cl_flags + clang_cl_test_flags;
         exceptions_flag = clang_cl_exceptions_flags;
@@ -49,11 +49,11 @@ export {
       exceptions_flag.clear();
     }
 
-    const auto standard = cmake::get_cxx_standard();
+    const auto standard = cmake::cxx_standard;
     if (!standard) {
       cmake::status("No cmake::cxx_standard set, assuming C++11");
-      absl::cxx_standard = 11;
-    } else if (*standard == 98) {
+      absl::cxx_standard = cmake::cxx_standard_value::cpp_11;
+    } else if (*standard == cpp_98) {
       cmake::fatal_error("Abseil requires at least C++11");
     } else {
       absl::cxx_standard = *standard;

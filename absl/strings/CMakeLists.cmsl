@@ -1,5 +1,5 @@
-import AbseilHelpers;
-import AbseilConfigureCopts;
+import "CMake/AbseilHelpers";
+import "CMake/AbseilConfigureCopts";
 
 int main() {
   auto strings_internal = cmake::declare_library("absl::strings_internal");

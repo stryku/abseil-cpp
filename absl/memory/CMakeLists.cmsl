@@ -1,5 +1,5 @@
-import AbseilHelpers;
-import AbseilConfigureCopts;
+import "CMake/AbseilHelpers";
+import "CMake/AbseilConfigureCopts";
 
 int main() {
   auto core_headers = cmake::declare_library("absl::core_headers");
